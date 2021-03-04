@@ -39,7 +39,7 @@ class SZ_JL_API():
     def get(self, url, payload=None):
 
         r = requests.get(url, params=payload)
-
+        print(r.url)
         return r
 
     def post(self, url, data, body):
@@ -117,8 +117,81 @@ class SZ_JL_API():
 
         pass
 
+    def ger_hotel_list(self):
+
+        url = 'http://58.250.56.211:8081/api/hotel/queryHotelList.json'
+        timestamp = self.get_timestamp()
+        head = self.get_head(timestamp)
+
+        baseindex = 1
+        data = {
+            "head": head,
+            "data": {
+                "pageIndex": baseindex,
+                "pageSize": 1000,
+                "countryId": "70007",
+            }
+        }
+
+        # 获取第一次数据
+        r = self.get(url, self.creater_payload(data))
+        if r.status_code == 200:
+
+            res = json.loads(r.text)
+            result = res['result']
+            if len(result['hotels']) > 0:
+                self.creater_hotels_info_list(result['hotels'])
+
+            count = result['count']
+            page_Size = result['pageSize']
+            page_max = int(count / page_Size) + 1
+            pageIndex = result['pageIndex']
+
+            # 获取剩下的数据
+            for i in range(page_max):
+                index = i + 1 + baseindex
+                if index == pageIndex:
+                    continue
+                print(index)
+                timestamp = self.get_timestamp()
+                head = self.get_head(timestamp)
+                data = {
+                    "head": head,
+                    "data": {
+                        "pageIndex": index,
+                        "pageSize": 1000,
+                        "countryId": "70007",
+                    }
+                }
+                r = self.get(url, self.creater_payload(data))
+                if r.status_code == 200:
+
+                    res = json.loads(r.text)
+                    print(res)
+                    result = res['result']
+                    if len(result['hotels']) > 0:
+                        self.creater_hotels_info_list(result['hotels'])
+
+    def creater_hotels_info_list(self, data):
+        hotels_list = []
+        for info in data:
+            {'hotelId': 40800, 'countryId': 70007, 'stateId': 70045, 'cityId': 101, 'star': 55,
+             'hotelNameCn': '五台山五峰宾馆', 'hotelNameEn': 'Wufeng Hotel', 'addressCn': '忻州 风景名胜区龙泉寺旁',
+             'addressEn': 'Longquan Xinzhou scenic area next to the temple', 'phone': '0350-3365800',
+             'longitude': '113.562590', 'latitude': '38.996081', 'sellType': 0, 'updateTime': '2019-07-15 16:49:36'}
+
+            city = models.City_info.objects.get(cityId=info['cityId'])
+            info['ciyt_info'] = city
+            info['instantConfirmation'] = 0
+            print(info)
+            c = models.Hotel_info(**info)
+            hotels_list.append(c)
+        models.Hotel_info.objects.bulk_create(hotels_list)
+        pass
+
 
 if __name__ == '__main__':
     print('request start')
     a = SZ_JL_API()
-    a.get_city_list()
+    # a.get_city_list()
+    a.ger_hotel_list()

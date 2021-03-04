@@ -30,17 +30,22 @@ admin.site.site_title = '测试系统'  # 设置title
 @admin.register(models.City_info)
 class City_info_admin(admin.ModelAdmin):
     list_display = (
-        'city_id',
+        'cityId',
+        'cityCn',
+        'cityEn',
+
         'countryId',
         'countryCn',
         'countryEn',
         'stateId',
         'stateCn',
         'stateEn',
-        'cityId',
-        'cityCn',
-        'cityEn',
+
         'is_effective',
+
+        'sys_create_time',
+        'sys_update_time',
+        'sys_create_user',
     )
     list_filter = (
         'countryCn',
@@ -50,7 +55,7 @@ class City_info_admin(admin.ModelAdmin):
 @admin.register(models.Hotel_info)
 class Hotel_info_admin(admin.ModelAdmin):
     list_display = (
-        'hotel_id',
+
         'hotelId',
         'countryId',
         'stateId',

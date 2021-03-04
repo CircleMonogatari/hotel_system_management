@@ -22,21 +22,24 @@ class City_info(models.Model):
         (0, '不启用'),
         (1, '启用'),
     }
+    cityId = models.IntegerField('城市编号', primary_key=True)
+    cityCn = models.CharField('城市中文名', max_length=200, default='未知')
+    cityEn = models.CharField('城市英文名', max_length=1000, default='未知')
 
-    city_id = models.BigAutoField('id', primary_key=True)
     countryId = models.IntegerField('国家编号', default=0, )
     countryCn = models.CharField('国家中文名', max_length=20, default='未知')
     countryEn = models.CharField('国家英文名', max_length=200, default='未知')
     stateId = models.IntegerField('省份编号', default=0, )
-    stateCn = models.CharField('省份中文名', max_length=20, default='未知')
-    stateEn = models.CharField('省份英文名', max_length=200, default='未知')
-    cityId = models.IntegerField('城市编号', default=0, )
-    cityCn = models.CharField('城市中文名', max_length=20, default='未知')
-    cityEn = models.CharField('城市英文名', max_length=500, default='未知')
+    stateCn = models.CharField('省份中文名', max_length=200, default='未知')
+    stateEn = models.CharField('省份英文名', max_length=1000, default='未知')
     is_effective = models.IntegerField('是否启用', default=0, choices=IS_EFFECTIVE)
 
+    sys_create_time = models.DateTimeField('创建时间', auto_now_add=True)
+    sys_update_time = models.DateTimeField('更新时间', auto_now=True)
+    sys_create_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name='创建人')
+
     def __str__(self):
-        return '[]-'.format(self.stateCn, self.cityCn)
+        return '[{}]-{}'.format(self.countryCn, self.cityCn)
 
     class Meta:
         managed = manageFlag
@@ -50,18 +53,16 @@ class Hotel_info(models.Model):
         (1, '启用'),
     }
 
-    hotel_id = models.BigAutoField('id', primary_key=True)
-
-    hotelId = models.IntegerField('酒店编号', )
+    hotelId = models.IntegerField('酒店编号', primary_key=True)
     countryId = models.IntegerField('国家编号', )
     stateId = models.IntegerField('省份编号', )
     cityId = models.IntegerField('城市编号', )
     ciyt_info = models.ForeignKey(City_info, null=True, on_delete=models.SET_NULL)
-    star = models.IntegerField('酒店星级', )
-    hotelNameCn = models.CharField('酒店中文名', max_length=100, default='无')
-    hotelNameEn = models.CharField('酒店英文名', max_length=100, default='无')
-    addressCn = models.CharField('中文地址', max_length=100, default='无')
-    addressEn = models.CharField('英文地址', max_length=100, default='无')
+    star = models.IntegerField('酒店星级', default=0)
+    hotelNameCn = models.CharField('酒店中文名', max_length=500, default='无')
+    hotelNameEn = models.CharField('酒店英文名', max_length=1000, default='无')
+    addressCn = models.CharField('中文地址', max_length=500, default='无')
+    addressEn = models.CharField('英文地址', max_length=1000, default='无')
     phone = models.CharField('酒店总机', max_length=100, default='无')
     longitude = models.CharField('经度', max_length=20, default='无')
     latitude = models.CharField('纬度', max_length=20, default='无')

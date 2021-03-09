@@ -129,32 +129,101 @@ class Price_model_info(models.Model):
         db_table = 'price_model_info'
 
 
-# class Room_info(models.Model):
-#
-#     roomTypeId = models.IntegerField('房型编号', default=0) #	无
-#     roomTypeCn = models.CharField('客房中文名称', max_length=50, default='无') #	无
-#     roomTypeEn = models.CharField('客房英文名称', max_length=50, default='无') #	无
-#     roomTypeEn = models.CharField('客房英文名称', max_length=50, default='无') #	无
-#     basisroomid = models.IntegerField('基础房型ID', default=-1) #	278954	基础房型仅供参考，无物理房型的，返回-1
-#     basisroomCn = models.CharField('基础房型中文名', max_length=50, default='无') #	城景行政豪华房	基础房型仅供参考，无物理房型的，返回-1
-#     maximize = models.IntegerField('最大入住人数', default=-1) #	无
-#     acreage = models.CharField('房间面积', max_length=50, default='无') #	无
-#     bedWidth = models.CharField('床大小', max_length=50, default='无') #	无
-#     floorDistribute = models.CharField('楼层', max_length=50, default='无') #	无
-#     facilities = models.CharField('房型设施', max_length=50, default='无') #	无
-#     extraBedtState = models.CharField('是否允许加床', max_length=50, default='无') #	无
-#     bedCount = models.IntegerField('加床数量', default=-1) #	无
-#
-#     sys_create_time = models.DateTimeField('创建时间', auto_now_add=True)
-#     sys_update_time = models.DateTimeField('更新时间', auto_now=True)
-#     sys_create_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name='创建人')
-#
-#     class Meta:
-#         managed = manageFlag
-#         verbose_name = '房间信息表'
-#         verbose_name_plural = verbose_name
-#         db_table = 'room_info'
-#
+class Room_info(models.Model):
+    roomTypeId = models.IntegerField('房型编号', default=0)  # 无
+    roomTypeCn = models.CharField('客房中文名称', max_length=50, default='无')  # 无
+    roomTypeEn = models.CharField('客房英文名称', max_length=50, default='无')  # 无
+    roomTypeEn = models.CharField('客房英文名称', max_length=50, default='无')  # 无
+    basisroomid = models.IntegerField('基础房型ID', default=-1)  # 278954	基础房型仅供参考，无物理房型的，返回-1
+    basisroomCn = models.CharField('基础房型中文名', max_length=50, default='无')  # 城景行政豪华房	基础房型仅供参考，无物理房型的，返回-1
+    maximize = models.IntegerField('最大入住人数', default=-1)  # 无
+    acreage = models.CharField('房间面积', max_length=50, default='无')  # 无
+    bedWidth = models.CharField('床大小', max_length=50, default='无')  # 无
+    floorDistribute = models.CharField('楼层', max_length=50, default='无')  # 无
+    facilities = models.CharField('房型设施', max_length=50, default='无')  # 无
+    extraBedtState = models.CharField('是否允许加床', max_length=50, default='无')  # 无
+    bedCount = models.IntegerField('加床数量', default=-1)  # 无
+
+    sys_create_time = models.DateTimeField('创建时间', auto_now_add=True)
+    sys_update_time = models.DateTimeField('更新时间', auto_now=True)
+    sys_create_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name='创建人')
+
+    hotel = models.ForeignKey(Hotel_info, related_name='rooms', on_delete=models.CASCADE, verbose_name='酒店')
+
+    class Meta:
+        managed = manageFlag
+        verbose_name = '房间信息表'
+        verbose_name_plural = verbose_name
+        db_table = 'room_info'
+
+
+class Rate_info(models.Model):
+    '''
+    价格类型编号	rateTypeId	Integer	无
+    价格类型中文名	rateTypeCn	String	无
+    价格类型英文名	rateTypeEn	String  无
+    '''
+    rateTypeId = models.IntegerField('价格类型编号', primary_key=True)
+    rateTypeCn = models.CharField('价格类型中文名', max_length=100)
+    rateTypeEn = models.CharField('价格类型英文名', max_length=500)
+
+    hotel = models.ForeignKey(Hotel_info, related_name='rates', on_delete=models.CASCADE, verbose_name='酒店')
+
+    sys_create_time = models.DateTimeField('创建时间', auto_now_add=True)
+    sys_update_time = models.DateTimeField('更新时间', auto_now=True)
+    sys_create_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name='创建人')
+
+    class Meta:
+        managed = manageFlag
+        verbose_name = '价格类型表'
+        verbose_name_plural = verbose_name
+        db_table = 'rate_info'
+
+
+class Room_image_info(models.Model):
+    '''
+    图片编号	imageId	Integer	无
+    图片类型	type	String	无	见常量列表
+    图片关联房型	roomTypeIds	String	无	一张图片可能对应多个房型，多个逗号分隔。
+    缩略图地址	thumbUrl	String	无
+    图片地址	imageUrl	String	无
+    是否带水印	imageLogo	Integer	无	0有水印logo 1无水印logo
+    图片规格	imageSize	Integer	无	图片规格0:未分类、1:350*350、2:550*412、3:640*960
+    '''
+
+    SIZE_CHOICES = {
+        (0, '未分类'),
+        (1, '350 * 350'),
+        (2, '550 * 412'),
+        (3, '640 * 960'),
+    }
+
+    LOGO_CHOICES = {
+        (0, '有水印logo'),
+        (1, '无水印logo'),
+        (-1, '未知'),
+    }
+
+    imageId = models.IntegerField('图片编号', primary_key=True)
+    imagetype = models.CharField('图片类型', max_length=50, default='无')
+    roomTypeIds = models.CharField('图片关联房型', max_length=100, default='无')
+    thumbUrl = models.CharField('缩略图地址', max_length=1000, default='无')
+    imageUrl = models.CharField('图片地址', max_length=1000, default='无')
+    imageLogo = models.IntegerField('是否带水印', choices=LOGO_CHOICES, default=-1)
+    imageSize = models.IntegerField('图片规格', choices=SIZE_CHOICES, default=0)
+
+    hotel = models.ForeignKey(Hotel_info, related_name='images', on_delete=models.CASCADE, verbose_name='酒店')
+
+    sys_create_time = models.DateTimeField('创建时间', auto_now_add=True)
+    sys_update_time = models.DateTimeField('更新时间', auto_now=True)
+    sys_create_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name='创建人')
+
+    class Meta:
+        managed = manageFlag
+        verbose_name = '房间图片信息表'
+        verbose_name_plural = verbose_name
+        db_table = 'room_image_info'
+
 
 class Order_info(models.Model):
     order_id = models.BigAutoField(primary_key=True)

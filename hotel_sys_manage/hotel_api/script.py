@@ -205,10 +205,49 @@ class SZ_JL_API():
         # 获取第一次数据
         r = self.get(url, self.creater_payload(data))
         if r.status_code == 200:
-            return r.text
+            return json.loads(r.text)
+        return json.loads("{'msg': 'error'}")
 
-        return "{'msg': 'error'}"
 
+    def get_RatePlan(self, hotelId, checkInDate, checkOutDate):
+
+        url = 'http://58.250.56.211:8081/api/hotel/queryRatePlan.json'
+        timestamp = self.get_timestamp()
+        head = self.get_head(timestamp)
+
+        '''
+        报价查询：输入参数
+        名称	    编码	    类型	    是否必填	示例值	描述
+        酒店编号	hotelId	Integer	是		无
+        入住日期	checkInDate	String	是		yyyy-MM-dd
+        离店日期	checkOutDate	String	是		yyyy-MM-dd最大入离日期不能超过90天
+        房间信息	roomGroups	RoomGroup[]	否	2成人	常用设置为1个房间2个成人
+        数据类型	queryType	Integer	否	0	请求数据类型默认值为1落地,0:全部,1:落地,2.实时
+        '''
+
+        {"head":
+             {"appKey": "SZ28276", "timestamp": "1516816895000", "sign": "063cae11a00896187f80eecbf922364a",
+                  "version": "3.0.1"
+              },
+         "data": {"hotelId": 1, "checkInDate": "2018-01-10", "checkOutDate": "2018-01-20"}
+         }
+
+
+        data = {
+            "head": head,
+            "data": {
+                "hotelId": hotelId,
+                "checkInDate": checkInDate,
+                "checkOutDate": checkOutDate,
+            }
+        }
+
+        # 获取第一次数据
+        r = self.get(url, self.creater_payload(data))
+        if r.status_code == 200:
+
+            return json.loads(r.text)
+        return json.loads("{'msg': 'error'}")
 
 
 if __name__ == '__main__':
@@ -222,4 +261,6 @@ if __name__ == '__main__':
     print('request start')
     a = SZ_JL_API()
     # a.get_city_list()
-    a.ger_hotel_list()
+    # a.ger_hotel_list()
+
+    print(a.get_RatePlan('1', '2021-3-9', '2021-5-1'))

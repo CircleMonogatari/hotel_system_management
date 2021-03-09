@@ -101,9 +101,9 @@ class Hotel_info_admin(admin.ModelAdmin):
         'sys_create_user',
     )
 
-    list_filter = ('hotelNameCn', 'ciyt_info__cityCn',)
-    # search_fields = ('city', 'name',)
-    # list_filter = ('project', 'sort',)
+    # list_filter = ('hotelNameCn', 'ciyt_info__cityCn',)
+    search_fields = ('hotelNameCn', 'ciyt_info__cityCn',)
+
     # record_model_field = 'api'
     # record_model = models.Api_Record_info
     # actions = ['record_create']
@@ -171,31 +171,63 @@ class Proce_model_info_admin(admin.ModelAdmin):
     )
 
 
-#
-# @admin.register(models.Room_info)
-# class Room_info_admin(admin.ModelAdmin):
-#     list_display = (
-#         'roomTypeId',
-#         'roomTypeCn',
-#         'roomTypeEn',
-#         'roomTypeEn',
-#         'basisroomid',
-#         'basisroomCn',
-#         'maximize',
-#         'acreage',
-#         'bedWidth',
-#         'floorDistribute',
-#         'facilities',
-#         'extraBedtState',
-#         'bedCount',
-#
-#         'sys_create_time',
-#         'sys_update_time',
-#         'sys_create_user',
-#     )
-#
-#     list_filter = ('basisroomCn',)
-#
+
+@admin.register(models.Room_info)
+class Room_info_admin(admin.ModelAdmin):
+    list_display = (
+        'roomTypeId',
+        'roomTypeCn',
+        'roomTypeEn',
+        'roomTypeEn',
+        'basisroomid',
+        'basisroomCn',
+        'maximize',
+        'acreage',
+        'bedWidth',
+        'floorDistribute',
+        'facilities',
+        'extraBedtState',
+        'bedCount',
+        'sys_create_time',
+        'sys_update_time',
+        'sys_create_user',
+        'hotel',
+    )
+
+    list_filter = ('basisroomCn',)
+
+@admin.register(models.Rate_info)
+class rate_info_admin(admin.ModelAdmin):
+    list_display = (
+        'rateTypeId',
+        'rateTypeCn',
+        'rateTypeEn',
+        'hotel',
+        'sys_create_time',
+        'sys_update_time',
+        'sys_create_user',
+    )
+
+    search_fields = ('rateTypeCn',)
+
+
+@admin.register(models.Room_image_info)
+class room_image_info_admin(admin.ModelAdmin):
+    list_display = (
+        'imageId',
+        'imagetype',
+        'roomTypeIds',
+        'thumbUrl',
+        'imageUrl',
+        'imageLogo',
+        'imageSize',
+        'hotel',
+        'sys_create_time',
+        'sys_update_time',
+        'sys_create_user',
+    )
+
+    # list_filter = ('basisroomCn',)
 
 @admin.register(models.Order_info)
 class Order_info_admin(admin.ModelAdmin):

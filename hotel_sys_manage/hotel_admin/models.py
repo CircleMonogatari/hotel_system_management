@@ -47,6 +47,7 @@ class City_info(models.Model):
         verbose_name_plural = verbose_name
         db_table = 'city_info'
 
+
 class Hotel_info(models.Model):
     IS_EFFECTIVE = {
         (0, '不启用'),
@@ -72,6 +73,26 @@ class Hotel_info(models.Model):
 
     is_effective = models.IntegerField('是否启用', default=0, choices=IS_EFFECTIVE)
     detail = models.TextField('备注')
+
+    # static field
+    themeType = models.CharField('酒店主题', max_length=500, default='无')  # vacation	见常量列表
+    area = models.IntegerField('行政区', default=-1)  # 30000184
+    businessCircle = models.IntegerField('商业区', default=-1)  # 30001724
+    fax = models.CharField('传真', max_length=100, default='无')  # 00623-61761868
+    email = models.CharField('邮箱', max_length=500, default='无')  #
+    postCode = models.CharField('邮编号', max_length=100, default='无')  #
+    checkPolicy = models.CharField('酒店入离政策', max_length=500, default='无')  # 入住时间:14点以后，离店时间:12点以前
+    childrenPolicy = models.CharField('儿童政策', max_length=100, default='无')  # 不接受18岁以下客人单独入住。
+    petPolicy = models.CharField('宠物政策', max_length=100, default='无')  # 不可携带宠物。
+    establishmentDate = models.CharField('开业时间', max_length=200, default='无')  #
+    renovationDate = models.CharField('装修时间', max_length=200, default='无')  #
+    hotelGroup = models.CharField('集团', max_length=500, default='无')  #
+    hotelBrand = models.CharField('品牌', max_length=500, default='无')  #
+    facilities = models.CharField('酒店设施', max_length=500, default='无')  # 11|12|13|14|15|17|18|19|20|22|23|24|21|73
+    cardType = models.CharField('信用卡', max_length=500, default='无')  # Master,VISA,JCB,UnionPay,
+    minPrice = models.DecimalField('酒店最低价', max_digits=5, decimal_places=2, default=0.0)  # 0
+    introduceCn = models.CharField('酒店中文介绍', max_length=500, default='无')  #
+    introduceEn = models.CharField('酒店英文介绍', max_length=500, default='无')  #
 
     sys_create_time = models.DateTimeField('创建时间', auto_now_add=True)
     sys_update_time = models.DateTimeField('更新时间', auto_now=True)
@@ -108,25 +129,32 @@ class Price_model_info(models.Model):
         db_table = 'price_model_info'
 
 
-class Room_info(models.Model):
-    room_id = models.BigAutoField(primary_key=True)
-    room_type = models.CharField('房型', max_length=100, default='无')
-    hotel = models.ForeignKey(Hotel_info, on_delete=models.SET_NULL, null=True, verbose_name='酒店')
-
-    price = models.DecimalField('报价', max_digits=5, decimal_places=2, default=0.0)
-    custom_proce = models.DecimalField('强制自定义售价', max_digits=5, decimal_places=2, default=0.0)
-    price_model = models.ManyToManyField(Price_model_info, verbose_name='加价类型')
-
-    sys_create_time = models.DateTimeField('创建时间', auto_now_add=True)
-    sys_update_time = models.DateTimeField('更新时间', auto_now=True)
-    sys_create_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name='创建人')
-
-    class Meta:
-        managed = manageFlag
-        verbose_name = '房间信息表'
-        verbose_name_plural = verbose_name
-        db_table = 'room_info'
-
+# class Room_info(models.Model):
+#
+#     roomTypeId = models.IntegerField('房型编号', default=0) #	无
+#     roomTypeCn = models.CharField('客房中文名称', max_length=50, default='无') #	无
+#     roomTypeEn = models.CharField('客房英文名称', max_length=50, default='无') #	无
+#     roomTypeEn = models.CharField('客房英文名称', max_length=50, default='无') #	无
+#     basisroomid = models.IntegerField('基础房型ID', default=-1) #	278954	基础房型仅供参考，无物理房型的，返回-1
+#     basisroomCn = models.CharField('基础房型中文名', max_length=50, default='无') #	城景行政豪华房	基础房型仅供参考，无物理房型的，返回-1
+#     maximize = models.IntegerField('最大入住人数', default=-1) #	无
+#     acreage = models.CharField('房间面积', max_length=50, default='无') #	无
+#     bedWidth = models.CharField('床大小', max_length=50, default='无') #	无
+#     floorDistribute = models.CharField('楼层', max_length=50, default='无') #	无
+#     facilities = models.CharField('房型设施', max_length=50, default='无') #	无
+#     extraBedtState = models.CharField('是否允许加床', max_length=50, default='无') #	无
+#     bedCount = models.IntegerField('加床数量', default=-1) #	无
+#
+#     sys_create_time = models.DateTimeField('创建时间', auto_now_add=True)
+#     sys_update_time = models.DateTimeField('更新时间', auto_now=True)
+#     sys_create_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name='创建人')
+#
+#     class Meta:
+#         managed = manageFlag
+#         verbose_name = '房间信息表'
+#         verbose_name_plural = verbose_name
+#         db_table = 'room_info'
+#
 
 class Order_info(models.Model):
     order_id = models.BigAutoField(primary_key=True)

@@ -1,12 +1,15 @@
 from django.contrib import admin
+from django.contrib import messages
 
 from hotel_admin import models
+from hotel_api import script
 
 # Register your models here.
 
 admin.site.site_header = '测试系统'  # 设置header
 admin.site.site_title = '测试系统'  # 设置title
 
+API = script.SZ_JL_API()
 
 # class Record_Creater_Action(object):
 #     record_model = None
@@ -73,6 +76,26 @@ class Hotel_info_admin(admin.ModelAdmin):
         'sellType',
         'updateTime',
         'detail',
+
+        'themeType',
+        'area',
+        'businessCircle',
+        'fax',
+        'email',
+        'postCode',
+        'checkPolicy',
+        'childrenPolicy',
+        'petPolicy',
+        'establishmentDate',
+        'renovationDate',
+        'hotelGroup',
+        'hotelBrand',
+        'facilities',
+        'cardType',
+        'minPrice',
+        'introduceCn',
+        'introduceEn',
+
         'sys_create_time',
         'sys_update_time',
         'sys_create_user',
@@ -85,6 +108,58 @@ class Hotel_info_admin(admin.ModelAdmin):
     # record_model = models.Api_Record_info
     # actions = ['record_create']
 
+    # 增加自定义按钮
+    actions = ['refresh_hotel_info', 'refresh_room_info', 'refresh_rate_info', 'refresh_image_info']
+
+    def refresh_hotel_info(self, request, queryset):
+        info_list = []
+
+        for hotel in queryset:
+            data = API.get_hotel_static_info(str(hotel.pk), '1')
+            info_list.append(data)
+            print(hotel)
+            print(data)
+
+    def refresh_room_info(self, request, queryset):
+        info_list = []
+
+        for hotel in queryset:
+            data = API.get_hotel_static_info(hotel.pk, '2')
+            info_list.append(data)
+
+            messages.INFO(request, '请求成功{}'.format(data))
+
+    def refresh_rate_info(self, request, queryset):
+        info_list = []
+
+        for hotel in queryset:
+            data = API.get_hotel_static_info(hotel.pk, '3')
+            info_list.append(data)
+
+            messages.INFO(request, '请求成功{}'.format(data))
+
+    def refresh_image_info(self, request, queryset):
+        info_list = []
+
+        for hotel in queryset:
+            data = API.get_hotel_static_info(hotel.pk, '4')
+            info_list.append(data)
+
+            messages.INFO(request, '请求成功{}'.format(data))
+
+    # admin 样式
+    refresh_hotel_info.short_description = '更新酒店信息'
+    # icon，参考element-ui icon与https://fontawesome.com
+    refresh_hotel_info.icon = 'fas fa-audio-description'
+    # 指定element-ui的按钮类型，参考https://element.eleme.cn/#/zh-CN/component/button
+    refresh_hotel_info.type = 'danger'
+    # 给按钮追加自定义的颜色
+    refresh_hotel_info.style = 'color:black;'
+
+    refresh_room_info.short_description = '更新酒店房型'
+    refresh_rate_info.short_description = '更新价格'
+    refresh_image_info.short_description = '刷新图片'
+
 
 @admin.register(models.Price_model_info)
 class Proce_model_info_admin(admin.ModelAdmin):
@@ -96,22 +171,31 @@ class Proce_model_info_admin(admin.ModelAdmin):
     )
 
 
-@admin.register(models.Room_info)
-class Room_info_admin(admin.ModelAdmin):
-    list_display = (
-        'room_id',
-        'room_type',
-        'hotel',
-        'price',
-        'custom_proce',
-
-        'sys_create_time',
-        'sys_update_time',
-        'sys_create_user',
-    )
-
-    list_filter = ('room_type',)
-
+#
+# @admin.register(models.Room_info)
+# class Room_info_admin(admin.ModelAdmin):
+#     list_display = (
+#         'roomTypeId',
+#         'roomTypeCn',
+#         'roomTypeEn',
+#         'roomTypeEn',
+#         'basisroomid',
+#         'basisroomCn',
+#         'maximize',
+#         'acreage',
+#         'bedWidth',
+#         'floorDistribute',
+#         'facilities',
+#         'extraBedtState',
+#         'bedCount',
+#
+#         'sys_create_time',
+#         'sys_update_time',
+#         'sys_create_user',
+#     )
+#
+#     list_filter = ('basisroomCn',)
+#
 
 @admin.register(models.Order_info)
 class Order_info_admin(admin.ModelAdmin):

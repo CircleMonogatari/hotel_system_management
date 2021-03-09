@@ -50,6 +50,9 @@ nld_monitor_sys
         pip install -r requirements.txt
         
         -i https://mirrors.aliyun.com/pypi/simple/
+        
+    3.当前可能会出现 ssh过期的情况 解决办法
+        -i http://pypi.douban.com/simple/ --trusted-host pypi.douban.com
 
 ## pycharm 进入django shell
 

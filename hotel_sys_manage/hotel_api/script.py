@@ -5,14 +5,6 @@ import time
 
 import requests
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "hotel_sys_manage.settings")
-
-import django
-
-django.setup()
-
-from hotel_admin import models
-
 
 class SZ_JL_API():
     #
@@ -189,8 +181,44 @@ class SZ_JL_API():
         models.Hotel_info.objects.bulk_create(hotels_list)
         pass
 
+    STATIC_INFO_PARAMS_HOTEL = '1'
+    STATIC_INFO_PARAMS_ROOM = '2'
+    STATIC_INFO_PARAMS_RATE = '3'
+    STATIC_INFO_PARAMS_IMAGE = '4'
+
+    def get_hotel_static_info(self, hotelid, params='1'):
+
+        # 不传默认1，多个逗号分隔。1需要酒店静态信息 2需要房型信息 3需要价格类型 4需要酒店图片
+
+        # "data": {"hotelId": 15, "params": "1,2,3,4"}
+        url = 'http://58.250.56.211:8081/api/hotel/queryHotelDetail.json'
+        timestamp = self.get_timestamp()
+        head = self.get_head(timestamp)
+
+        data = {
+            "head": head,
+            "data": {
+                "hotelId": hotelid, "params": params,
+            }
+        }
+
+        # 获取第一次数据
+        r = self.get(url, self.creater_payload(data))
+        if r.status_code == 200:
+            return r.text
+
+        return "{'msg': 'error'}"
+
+
 
 if __name__ == '__main__':
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "hotel_sys_manage.settings")
+
+    import django
+
+    django.setup()
+    from hotel_admin import models
+
     print('request start')
     a = SZ_JL_API()
     # a.get_city_list()

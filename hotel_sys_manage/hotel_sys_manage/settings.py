@@ -85,7 +85,7 @@ if mysqlip is None:
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'hotel_system',
+        'NAME': 'hotel',
         'USER': mysqluser,
         'PASSWORD': mysqlpass,
         'HOST': mysqlip,

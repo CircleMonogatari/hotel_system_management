@@ -202,7 +202,7 @@ class SZ_JL_API():
             }
         }
 
-        # 获取第一次数据
+
         r = self.get(url, self.creater_payload(data))
         if r.status_code == 200:
             return json.loads(r.text)
@@ -263,4 +263,4 @@ if __name__ == '__main__':
     # a.get_city_list()
     # a.ger_hotel_list()
 
-    print(a.get_RatePlan('1', '2021-3-9', '2021-5-1'))
+    print(a.get_RatePlan('1', '2021-3-10', '2021-5-1'))

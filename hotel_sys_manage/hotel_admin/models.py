@@ -104,6 +104,8 @@ class Hotel_info(models.Model):
         verbose_name_plural = verbose_name
         db_table = 'hotel_info'
 
+    def set_puls_info(self, data):
+        pass
 
 class Price_model_info(models.Model):
     LEVEL_CHOICES = {

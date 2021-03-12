@@ -116,9 +116,11 @@ class Hotel_info_admin(admin.ModelAdmin):
 
         for hotel in queryset:
             data = API.get_hotel_static_info(str(hotel.pk), '1')
-            info_list.append(data)
-            print(hotel)
-            print(data)
+            if data.get('code', -1) == 0:
+                hotel.set_puls_info(data.get('result', {}).get('hotelRatePlanList', []))
+
+        messages.add_message(request, messages.SUCCESS, '操作成功123123123123')
+        messages.add_message(request, messages.ERROR, '操作成功123123123123')
 
     def refresh_room_info(self, request, queryset):
         info_list = []

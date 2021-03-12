@@ -174,6 +174,7 @@ class SZ_JL_API():
 
             city = models.City_info.objects.get(cityId=info['cityId'])
             info['ciyt_info'] = city
+            info['star'] = str(info['star'])
             info['instantConfirmation'] = 0
             print(info)
             c = models.Hotel_info(**info)
@@ -260,7 +261,11 @@ if __name__ == '__main__':
 
     print('request start')
     a = SZ_JL_API()
+
+    # 获取城市
     # a.get_city_list()
+
+    # 获取酒店数据
     # a.ger_hotel_list()
 
     print(a.get_RatePlan('1', '2021-3-10', '2021-5-1'))

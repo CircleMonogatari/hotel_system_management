@@ -11,6 +11,7 @@ admin.site.site_title = '测试系统'  # 设置title
 
 API = script.SZ_JL_API()
 
+
 # class Record_Creater_Action(object):
 #     record_model = None
 #     record_model_field = 'obj'
@@ -54,6 +55,7 @@ class City_info_admin(admin.ModelAdmin):
         'countryCn',
         'countryEn',
     )
+
 
 @admin.register(models.Hotel_info)
 class Hotel_info_admin(admin.ModelAdmin):
@@ -109,45 +111,45 @@ class Hotel_info_admin(admin.ModelAdmin):
     # actions = ['record_create']
 
     # 增加自定义按钮
-    actions = ['refresh_hotel_info', 'refresh_room_info', 'refresh_rate_info', 'refresh_image_info']
+    actions = ['refresh_hotel_info', ]
 
+    # 更新静态信息
     def refresh_hotel_info(self, request, queryset):
-        info_list = []
+
+        message_map = {
+            True: 0,
+            False: 0,
+            'plus': 0,
+
+        }
 
         for hotel in queryset:
-            data = API.get_hotel_static_info(str(hotel.pk), '1')
+            data = API.get_hotel_static_info(str(hotel.pk), '1,2,3,4')
             if data.get('code', -1) == 0:
-                hotel.set_puls_info(data.get('result', {}).get('hotelRatePlanList', []))
+                hotelDetailList = data.get('result', {}).get('hotelDetailList', [])
+                if len(hotelDetailList) > 0:
+                    # 酒店信息
+                    hotelInfo = hotelDetailList[0].get('hotelInfo', {})
+                    roomTypeList = hotelDetailList[0].get('roomTypeList', [])
+                    rateTypeList = hotelDetailList[0].get('rateTypeList', [])
+                    imageList = hotelDetailList[0].get('imageList', [])
 
-        messages.add_message(request, messages.SUCCESS, '操作成功123123123123')
-        messages.add_message(request, messages.ERROR, '操作成功123123123123')
+                    # 静态信息
+                    res = hotel.set_puls_info(hotelInfo)
 
-    def refresh_room_info(self, request, queryset):
-        info_list = []
+                    # 房间信息 价格类型 静态图片
+                    if hotel.refresh_puls_static_info(roomTypeList, rateTypeList, imageList) is False:
+                        message_map['plus'] = message_map['plus'] + 1
 
-        for hotel in queryset:
-            data = API.get_hotel_static_info(hotel.pk, '2')
-            info_list.append(data)
+                    message_map[res] = message_map[res] + 1
+                else:
+                    print('Error :refresh_hotel_info--{}'.format(hotelInfo))
+                    message_map[False] = message_map[False] + 1
 
-            messages.INFO(request, '请求成功{}'.format(data))
-
-    def refresh_rate_info(self, request, queryset):
-        info_list = []
-
-        for hotel in queryset:
-            data = API.get_hotel_static_info(hotel.pk, '3')
-            info_list.append(data)
-
-            messages.INFO(request, '请求成功{}'.format(data))
-
-    def refresh_image_info(self, request, queryset):
-        info_list = []
-
-        for hotel in queryset:
-            data = API.get_hotel_static_info(hotel.pk, '4')
-            info_list.append(data)
-
-            messages.INFO(request, '请求成功{}'.format(data))
+        messages.add_message(request, messages.SUCCESS, '成功写入{}条数据'.format(message_map[True]))
+        messages.add_message(request, messages.ERROR, '失败{}条'.format(message_map[False]))
+        if message_map['plus'] > 0:
+            messages.add_message(request, messages.ERROR, '扩展信息失败{}条'.format(message_map['plus']))
 
     # admin 样式
     refresh_hotel_info.short_description = '更新酒店信息'
@@ -157,10 +159,6 @@ class Hotel_info_admin(admin.ModelAdmin):
     refresh_hotel_info.type = 'danger'
     # 给按钮追加自定义的颜色
     refresh_hotel_info.style = 'color:black;'
-
-    refresh_room_info.short_description = '更新酒店房型'
-    refresh_rate_info.short_description = '更新价格'
-    refresh_image_info.short_description = '刷新图片'
 
 
 @admin.register(models.Price_model_info)
@@ -173,7 +171,6 @@ class Proce_model_info_admin(admin.ModelAdmin):
     )
 
 
-
 @admin.register(models.Room_info)
 class Room_info_admin(admin.ModelAdmin):
     list_display = (
@@ -181,7 +178,7 @@ class Room_info_admin(admin.ModelAdmin):
         'roomTypeCn',
         'roomTypeEn',
         'roomTypeEn',
-        'basisroomid',
+        'basisroomId',
         'basisroomCn',
         'maximize',
         'acreage',
@@ -197,6 +194,7 @@ class Room_info_admin(admin.ModelAdmin):
     )
 
     list_filter = ('basisroomCn',)
+
 
 @admin.register(models.Rate_info)
 class rate_info_admin(admin.ModelAdmin):
@@ -230,6 +228,7 @@ class room_image_info_admin(admin.ModelAdmin):
     )
 
     # list_filter = ('basisroomCn',)
+
 
 @admin.register(models.Order_info)
 class Order_info_admin(admin.ModelAdmin):

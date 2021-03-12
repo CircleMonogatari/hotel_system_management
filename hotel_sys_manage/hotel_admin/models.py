@@ -59,7 +59,9 @@ class Hotel_info(models.Model):
     stateId = models.IntegerField('省份编号', )
     cityId = models.IntegerField('城市编号', )
     ciyt_info = models.ForeignKey(City_info, null=True, on_delete=models.SET_NULL)
-    star = models.IntegerField('酒店星级', default=0)
+
+    star = models.CharField('酒店星级', max_length=20, default=0)
+
     hotelNameCn = models.CharField('酒店中文名', max_length=500, default='无')
     hotelNameEn = models.CharField('酒店英文名', max_length=1000, default='无')
     addressCn = models.CharField('中文地址', max_length=500, default='无')
@@ -67,8 +69,8 @@ class Hotel_info(models.Model):
     phone = models.CharField('酒店总机', max_length=100, default='无')
     longitude = models.CharField('经度', max_length=20, default='无')
     latitude = models.CharField('纬度', max_length=20, default='无')
-    instantConfirmation = models.IntegerField('是否即时确认', )
-    sellType = models.IntegerField('是否热销酒店', )
+    instantConfirmation = models.IntegerField('是否即时确认', default=0)
+    sellType = models.IntegerField('是否热销酒店', default=0)
     updateTime = models.CharField('酒店方的修改时间', max_length=100, default='无')
 
     is_effective = models.IntegerField('是否启用', default=0, choices=IS_EFFECTIVE)
@@ -104,8 +106,92 @@ class Hotel_info(models.Model):
         verbose_name_plural = verbose_name
         db_table = 'hotel_info'
 
+    def refresh_puls_static_info(self, roomTypeList, rateTypeList, imageList):
+        res = False
+        res = False and self.creater_rooms(roomTypeList)
+        res = False and self.creater_rateTypeList(rateTypeList)
+        res = False and self.creater_imageList(imageList)
+
+        return res
+
     def set_puls_info(self, data):
-        pass
+        if len(data) == 0:
+            return False
+        try:
+            quset = Hotel_info.objects.filter(pk=self.pk)
+            quset.update(**data)
+        except Exception as exc:
+            print(exc)
+            return False
+        return True
+
+    def creater_rooms(self, rooms):
+        try:
+            for room in rooms:
+                roomTypeId = room.get('roomTypeId', '')
+                if roomTypeId == '':
+                    continue
+                room['hotel'] = self
+                res = Room_info.objects.get_or_create(roomTypeId=roomTypeId)
+
+                if res[1] is False:
+                    print('数据覆盖 原{}, 改{}'.format(res[0], room))
+                r = res[0]
+                for k in room:
+                    setattr(r, k, room[k])
+                r.save()
+
+        except Exception as exc:
+            print(exc)
+            return False
+        return True
+
+
+
+    def creater_rateTypeList(self, rateTypeList):
+        return True
+        try:
+            for rate in rateTypeList:
+                roomTypeId = rate.get('ratetypeId', '')
+                if roomTypeId == '':
+                    continue
+                rate['hotel'] = self
+                res = Rate_info.objects.get_or_create(roomTypeId=roomTypeId)
+
+                if res[1] is False:
+                    print('数据覆盖 原{}, 改{}'.format(res[0], room))
+                r = res[0]
+                for k in room:
+                    setattr(r, k, room[k])
+                r.save()
+
+        except Exception as exc:
+            print(exc)
+            return False
+        return True
+
+    def creater_imageList(self, imageList):
+        return True
+        try:
+            for image in imageList:
+                roomTypeId = room.get('roomTypeId', '')
+                if roomTypeId == '':
+                    continue
+                room['hotel'] = self
+                res = Room_info.objects.get_or_create(roomTypeId=roomTypeId)
+
+                if res[1] is False:
+                    print('数据覆盖 原{}, 改{}'.format(res[0], room))
+                r = res[0]
+                for k in room:
+                    setattr(r, k, room[k])
+                r.save()
+
+        except Exception as exc:
+            print(exc)
+            return False
+        return True
+
 
 class Price_model_info(models.Model):
     LEVEL_CHOICES = {
@@ -132,11 +218,10 @@ class Price_model_info(models.Model):
 
 
 class Room_info(models.Model):
-    roomTypeId = models.IntegerField('房型编号', default=0)  # 无
+    roomTypeId = models.IntegerField('房型编号', primary_key=True)  # 无
     roomTypeCn = models.CharField('客房中文名称', max_length=50, default='无')  # 无
-    roomTypeEn = models.CharField('客房英文名称', max_length=50, default='无')  # 无
-    roomTypeEn = models.CharField('客房英文名称', max_length=50, default='无')  # 无
-    basisroomid = models.IntegerField('基础房型ID', default=-1)  # 278954	基础房型仅供参考，无物理房型的，返回-1
+    roomTypeEn = models.CharField('客房英文名称', max_length=100, default='无')  # 无
+    basisroomId = models.IntegerField('基础房型ID', default=-1)  # 278954	基础房型仅供参考，无物理房型的，返回-1
     basisroomCn = models.CharField('基础房型中文名', max_length=50, default='无')  # 城景行政豪华房	基础房型仅供参考，无物理房型的，返回-1
     maximize = models.IntegerField('最大入住人数', default=-1)  # 无
     acreage = models.CharField('房间面积', max_length=50, default='无')  # 无
@@ -146,11 +231,14 @@ class Room_info(models.Model):
     extraBedtState = models.CharField('是否允许加床', max_length=50, default='无')  # 无
     bedCount = models.IntegerField('加床数量', default=-1)  # 无
 
+    bedType = models.CharField('类型', max_length=50, default='')
+    bedName = models.CharField('名称', max_length=100, default='')
+
     sys_create_time = models.DateTimeField('创建时间', auto_now_add=True)
     sys_update_time = models.DateTimeField('更新时间', auto_now=True)
     sys_create_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name='创建人')
 
-    hotel = models.ForeignKey(Hotel_info, related_name='rooms', on_delete=models.CASCADE, verbose_name='酒店')
+    hotel = models.ForeignKey(Hotel_info, related_name='rooms', on_delete=models.SET_NULL, null=True, verbose_name='酒店')
 
     class Meta:
         managed = manageFlag
@@ -165,11 +253,12 @@ class Rate_info(models.Model):
     价格类型中文名	rateTypeCn	String	无
     价格类型英文名	rateTypeEn	String  无
     '''
-    rateTypeId = models.IntegerField('价格类型编号', primary_key=True)
+
+    rateTypeId = models.CharField('价格类型编号', max_length=100, primary_key=True)
     rateTypeCn = models.CharField('价格类型中文名', max_length=100)
     rateTypeEn = models.CharField('价格类型英文名', max_length=500)
 
-    hotel = models.ForeignKey(Hotel_info, related_name='rates', on_delete=models.CASCADE, verbose_name='酒店')
+    hotel = models.ForeignKey(Hotel_info, related_name='rates', on_delete=models.SET_NULL, null=True, verbose_name='酒店')
 
     sys_create_time = models.DateTimeField('创建时间', auto_now_add=True)
     sys_update_time = models.DateTimeField('更新时间', auto_now=True)
@@ -214,7 +303,7 @@ class Room_image_info(models.Model):
     imageLogo = models.IntegerField('是否带水印', choices=LOGO_CHOICES, default=-1)
     imageSize = models.IntegerField('图片规格', choices=SIZE_CHOICES, default=0)
 
-    hotel = models.ForeignKey(Hotel_info, related_name='images', on_delete=models.CASCADE, verbose_name='酒店')
+    hotel = models.ForeignKey(Hotel_info, related_name='images', on_delete=models.SET_NULL, null=True, verbose_name='酒店')
 
     sys_create_time = models.DateTimeField('创建时间', auto_now_add=True)
     sys_update_time = models.DateTimeField('更新时间', auto_now=True)

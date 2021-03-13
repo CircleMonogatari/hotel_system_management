@@ -22,7 +22,10 @@ class City_info(models.Model):
         (0, '不启用'),
         (1, '启用'),
     }
-    cityId = models.IntegerField('城市编号', primary_key=True)
+    id = models.BigAutoField('编号', primary_key=True)
+    channel = models.CharField('渠道', max_length=50, default='未知')
+
+    cityId = models.CharField('城市编号', max_length=50, )
     cityCn = models.CharField('城市中文名', max_length=200, default='未知')
     cityEn = models.CharField('城市英文名', max_length=1000, default='未知')
 
@@ -54,7 +57,10 @@ class Hotel_info(models.Model):
         (1, '启用'),
     }
 
-    hotelId = models.IntegerField('酒店编号', primary_key=True)
+    id = models.BigAutoField('编号', primary_key=True)
+    channel = models.CharField('渠道', max_length=50, default='未知')
+
+    hotelId = models.IntegerField('酒店编号', )
     countryId = models.IntegerField('国家编号', )
     stateId = models.IntegerField('省份编号', )
     cityId = models.IntegerField('城市编号', )
@@ -119,6 +125,8 @@ class Hotel_info(models.Model):
             return False
         try:
             quset = Hotel_info.objects.filter(pk=self.pk)
+            data['channel'] = '深圳捷旅'
+            data['hotelId'] = str(data.pop('hotelId'))
             quset.update(**data)
         except Exception as exc:
             print(exc)
@@ -132,7 +140,8 @@ class Hotel_info(models.Model):
                 if roomTypeId == '':
                     continue
                 room['hotel'] = self
-                res = Room_info.objects.get_or_create(roomTypeId=roomTypeId)
+                room['channel'] = '深圳捷旅'
+                res = Room_type_info.objects.get_or_create(roomTypeId=roomTypeId, hotel=self)
 
                 if res[1] is False:
                     print('数据覆盖 原{}, 改{}'.format(res[0], room))
@@ -146,23 +155,26 @@ class Hotel_info(models.Model):
             return False
         return True
 
-
-
     def creater_rateTypeList(self, rateTypeList):
-        return True
         try:
             for rate in rateTypeList:
-                roomTypeId = rate.get('ratetypeId', '')
-                if roomTypeId == '':
+                # 数据转换 字段数据不统一
+                rate['rateTypeId'] = rate.pop('ratetypeId', '')
+                rate['rateTypeCn'] = rate.pop('ratetypeCn', '')
+                rate['rateTypeEn'] = rate.pop('ratetypeEn', '')
+
+                rateTypeId = rate.get('rateTypeId', '')
+                if rateTypeId == '':
                     continue
                 rate['hotel'] = self
-                res = Rate_info.objects.get_or_create(roomTypeId=roomTypeId)
+                rate['channel'] = '深圳捷旅'
+                res = Rate_type_info.objects.get_or_create(rateTypeId=rateTypeId, hotel=self)
 
                 if res[1] is False:
-                    print('数据覆盖 原{}, 改{}'.format(res[0], room))
+                    print('数据覆盖 原{}, 改{}'.format(res[0], rate))
                 r = res[0]
-                for k in room:
-                    setattr(r, k, room[k])
+                for k in rate:
+                    setattr(r, k, rate[k])
                 r.save()
 
         except Exception as exc:
@@ -171,20 +183,39 @@ class Hotel_info(models.Model):
         return True
 
     def creater_imageList(self, imageList):
-        return True
+
         try:
-            for image in imageList:
-                roomTypeId = room.get('roomTypeId', '')
-                if roomTypeId == '':
+            for info in imageList:
+
+                '''
+                channel
+                imageId
+                imagetype
+                roomTypeIds
+                thumbUrl
+                imageUrl
+                imageLogo
+                imageSize
+                '''
+
+                imageId = info.pop('imageId', '')
+                if imageId == '':
                     continue
-                room['hotel'] = self
-                res = Room_info.objects.get_or_create(roomTypeId=roomTypeId)
+                info['hotel'] = self
+                info['imagetype'] = info.pop('type', 0)
+                # info['roomTypeIds'] = info.pop('roomTypeIds', '')
+                info['thumbUrl'] = info.pop('thumbUrl', '')
+                info['imageUrl'] = info.pop('imageUrl', '')
+                info['imageLogo'] = info.pop('imageLogo', 0)
+                info['imageSize'] = info.pop('imageSize', 0)
+
+                res = Room_image_info.objects.get_or_create(imageId=imageId, hotel=self)
 
                 if res[1] is False:
-                    print('数据覆盖 原{}, 改{}'.format(res[0], room))
+                    print('数据覆盖 原{}, 改{}'.format(res[0], info))
                 r = res[0]
-                for k in room:
-                    setattr(r, k, room[k])
+                for k in info:
+                    setattr(r, k, info[k])
                 r.save()
 
         except Exception as exc:
@@ -193,32 +224,11 @@ class Hotel_info(models.Model):
         return True
 
 
-class Price_model_info(models.Model):
-    LEVEL_CHOICES = {
-        (0, '默认'),
-        (1, '节假日'),
-        (2, '自定义'),
-        (9, '最高级'),
-    }
+class Room_type_info(models.Model):
+    id = models.BigAutoField('编号', primary_key=True)
+    channel = models.CharField('渠道', max_length=50, default='未知')
 
-    price_model_id = models.BigAutoField(primary_key=True)
-    name = models.CharField('名称', max_length=100, default='无')
-    proportion = models.DecimalField('加价比列', max_digits=5, decimal_places=2, default=1.0)
-    level = models.IntegerField('优先级', default=0, choices=LEVEL_CHOICES)
-
-    sys_create_time = models.DateTimeField('创建时间', auto_now_add=True)
-    sys_update_time = models.DateTimeField('更新时间', auto_now=True)
-    sys_create_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name='创建人')
-
-    class Meta:
-        managed = manageFlag
-        verbose_name = '加价类型表'
-        verbose_name_plural = verbose_name
-        db_table = 'price_model_info'
-
-
-class Room_info(models.Model):
-    roomTypeId = models.IntegerField('房型编号', primary_key=True)  # 无
+    roomTypeId = models.CharField('房型编号', max_length=50, )  # 无
     roomTypeCn = models.CharField('客房中文名称', max_length=50, default='无')  # 无
     roomTypeEn = models.CharField('客房英文名称', max_length=100, default='无')  # 无
     basisroomId = models.IntegerField('基础房型ID', default=-1)  # 278954	基础房型仅供参考，无物理房型的，返回-1
@@ -244,17 +254,19 @@ class Room_info(models.Model):
         managed = manageFlag
         verbose_name = '房间信息表'
         verbose_name_plural = verbose_name
-        db_table = 'room_info'
+        db_table = 'Room_type_info'
 
 
-class Rate_info(models.Model):
+class Rate_type_info(models.Model):
     '''
     价格类型编号	rateTypeId	Integer	无
     价格类型中文名	rateTypeCn	String	无
     价格类型英文名	rateTypeEn	String  无
     '''
+    id = models.BigAutoField('编号', primary_key=True)
+    channel = models.CharField('渠道', max_length=50, default='未知')
 
-    rateTypeId = models.CharField('价格类型编号', max_length=100, primary_key=True)
+    rateTypeId = models.CharField('价格类型编号', max_length=100, )
     rateTypeCn = models.CharField('价格类型中文名', max_length=100)
     rateTypeEn = models.CharField('价格类型英文名', max_length=500)
 
@@ -266,9 +278,9 @@ class Rate_info(models.Model):
 
     class Meta:
         managed = manageFlag
-        verbose_name = '价格类型表'
+        verbose_name = '价格类型'
         verbose_name_plural = verbose_name
-        db_table = 'rate_info'
+        db_table = 'rate_type_info'
 
 
 class Room_image_info(models.Model):
@@ -295,7 +307,10 @@ class Room_image_info(models.Model):
         (-1, '未知'),
     }
 
-    imageId = models.IntegerField('图片编号', primary_key=True)
+    id = models.BigAutoField('编号', primary_key=True)
+    channel = models.CharField('渠道', max_length=50, default='未知')
+
+    imageId = models.CharField('图片编号', max_length=50, )
     imagetype = models.CharField('图片类型', max_length=50, default='无')
     roomTypeIds = models.CharField('图片关联房型', max_length=100, default='无')
     thumbUrl = models.CharField('缩略图地址', max_length=1000, default='无')
@@ -303,7 +318,8 @@ class Room_image_info(models.Model):
     imageLogo = models.IntegerField('是否带水印', choices=LOGO_CHOICES, default=-1)
     imageSize = models.IntegerField('图片规格', choices=SIZE_CHOICES, default=0)
 
-    hotel = models.ForeignKey(Hotel_info, related_name='images', on_delete=models.SET_NULL, null=True, verbose_name='酒店')
+    hotel = models.ForeignKey(Hotel_info, related_name='images', on_delete=models.SET_NULL, null=True,
+                              verbose_name='酒店')
 
     sys_create_time = models.DateTimeField('创建时间', auto_now_add=True)
     sys_update_time = models.DateTimeField('更新时间', auto_now=True)
@@ -314,6 +330,180 @@ class Room_image_info(models.Model):
         verbose_name = '房间图片信息表'
         verbose_name_plural = verbose_name
         db_table = 'room_image_info'
+
+
+class RatePlan_info(models.Model):
+    '''
+     价格类型编号	rateTypeId	Integer	无
+     价格类型中文名	rateTypeCn	String	无
+     价格类型英文名	rateTypeEn	String  无
+     '''
+    id = models.BigAutoField('编号', primary_key=True)
+    channel = models.CharField('渠道', max_length=50, default='未知')
+
+    keyId = models.CharField('产品编号', max_length=50, default='')  # 无	唯一产品编号
+    supplierId = models.IntegerField('供应商ID', default=0)  # 无	区分价格
+    keyName = models.CharField('房型名称', max_length=50, default='')  # 标准房
+    bedName = models.CharField('床型名称', max_length=50, default='')  # 大床
+    maxOccupancy = models.IntegerField('最大入住人数', default=0)  # 2	房间最大入住人数
+    currency = models.CharField('币种', max_length=50, default='')  # CNY
+    rateTypeId = models.CharField('价格类型编号', max_length=50, default='')  # 无
+    paymentType = models.IntegerField('付款类型', default=0)  # 无	0预付
+    breakfast = models.IntegerField('早餐', default=0)  # 无	0:无早、1:一份、2:两份...99:床位早、-1:含早(不确定早餐份数)
+    ifInvoice = models.IntegerField('是否开票', default=0)  # 无	1:可开票 2：不可开票
+
+    bookingRuleId = models.CharField('预订条款编号', max_length=50, default='')  # 无
+    refundRuleId = models.CharField('取消条款编号', max_length=50, default='')  # 无	为空默认是为1不可退。
+    market = models.CharField('适用市场', max_length=50, default='')  # CHN,HKG|	适用市场,适用市场|不适用市场,不适用市场分隔符前或后为-1，表示不限制
+
+    # nightlyRates = models.NightlyRate('间夜价格数组', )  # []	无  外键
+    # promotion_list = models.Promotion('礼包信息', )  # []	无
+
+    hotel = models.ForeignKey(Hotel_info, related_name='rateplans', on_delete=models.SET_NULL, null=True,
+                              verbose_name='酒店')
+
+    sys_create_time = models.DateTimeField('创建时间', auto_now_add=True)
+    sys_update_time = models.DateTimeField('更新时间', auto_now=True)
+    sys_create_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name='创建人')
+
+    class Meta:
+        managed = manageFlag
+        verbose_name = '产品信息'
+        verbose_name_plural = verbose_name
+        db_table = 'rateplan_info'
+
+
+class Hotel_NightlyRate_info(models.Model):
+    id = models.BigAutoField('编号', primary_key=True)
+    channel = models.CharField('渠道', max_length=50, default='未知')
+
+    formulaTypen = models.CharField('配额类型', max_length=50, default='')  # String	如：配额房、包房等,字段对应的code含义只对深捷旅有意义
+    date = models.CharField('日期', default='', max_length=20)  # String	无	yyyy-MM-dd
+    cose = models.DecimalField('价格', decimal_places=4, max_digits=10, default=0.0)  # Double	无
+    status = models.IntegerField('房态', default=0)  # Integer	无	1:保留房、2:待查、3:满房、4:限时确认
+    currentAlloment = models.IntegerField('库存', default=0)  # Integer	无	库存数量
+    breakfast = models.IntegerField('早餐', default=0)  # Integer	无	此处日历早餐,需要优先获取、无节点则拿上一级节点早餐
+    bookingRuleId = models.CharField('预订条款编号', max_length=20, default='')  # String	无	优先获取、无节点或无条款则拿上一级节点条款
+    refundRuleId = models.CharField('取消条款编号', max_length=20, default='')  # String	无	优先获取、无节点或无条款则拿上一级节点条款
+
+    hotel = models.ForeignKey(Hotel_info, on_delete=models.SET_NULL, null=True, verbose_name='酒店')
+    Rateplan = models.ForeignKey(RatePlan_info, related_name='nightlyRates', on_delete=models.SET_NULL, null=True,
+                                 verbose_name='酒店产品')
+
+    sys_create_time = models.DateTimeField('创建时间', auto_now_add=True)
+    sys_update_time = models.DateTimeField('更新时间', auto_now=True)
+    sys_create_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name='创建人')
+
+    class Meta:
+        managed = manageFlag
+        verbose_name = '夜间数据'
+        verbose_name_plural = verbose_name
+        db_table = 'hotel_nightlyrate_info'
+
+
+class Hotel_BookingRule_info(models.Model):
+    id = models.BigAutoField('编号', primary_key=True)
+    channel = models.CharField('渠道', max_length=50, default='未知')
+
+    bookingRuleId = models.CharField('预订条款编号', max_length=100)  # String	无
+    startDate = models.CharField('开始日期', max_length=100)  # String	无	报价生效时间yyyy-MM-dd HH:mm:ss 为空表示无限制
+    endDate = models.CharField('结束日期', max_length=100)  # String	无	报价结束时间yyyy-MM-dd HH:mm:ss 为空表示无限制
+    minAmount = models.IntegerField('预订最少数量', default=1)  # Integer	1	最少预定房间数量
+    maxAmount = models.IntegerField('预订最多数量', default=7)  # Integer	7	最大预定房间数量
+    minDays = models.IntegerField('最少入住天数', default=1)  # Integer	1	最少入住天数
+    maxDays = models.IntegerField('最多入住天数', default=30)  # Integer	30	最多入住天数
+    minAdvHours = models.IntegerField('最少提前预订时间', default=0)  # Integer	0	最少提前预订时间（以用户选择的入住日期的23:59:59计算）
+    maxAdvHours = models.IntegerField('最大提前预订时间', default=-1)  # Integer	-1	最大提前预定时间（以用户选择的入住日期的23:59:59计算）-1表示为无限制
+    weekSet = models.CharField('有效星期', max_length=100)  # String	1,2,3,4,5,6,7	有效星期。7表示星期日，1表示星期一，剩余的以此类推。当天不在星期范围内则无法下单
+    startTime = models.CharField('每日开始销售时间', max_length=100)  # String	HH:mm	销售起始小时数，默认值00:00
+    endTime = models.CharField('每日结束销售时间', max_length=100)  # String	HH:mm	销售结束小时，默认值30:00，代表第二天早上6点前还可以进行预定
+    bookingNotices = models.CharField('预订说明', max_length=2000)  # String	无	预定说明，没有强校验。请注意合理使用。
+
+    hotel = models.ForeignKey(Hotel_info, related_name='bookingrules', on_delete=models.SET_NULL, null=True,
+                              verbose_name='酒店')
+
+    sys_create_time = models.DateTimeField('创建时间', auto_now_add=True)
+    sys_update_time = models.DateTimeField('更新时间', auto_now=True)
+    sys_create_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name='创建人')
+
+    class Meta:
+        managed = manageFlag
+        verbose_name = '预订条款信息'
+        verbose_name_plural = verbose_name
+        db_table = 'hotel_bookingrule_info'
+
+
+class Hotel_RefundRule_info(models.Model):
+    id = models.BigAutoField('编号', primary_key=True)
+    channel = models.CharField('渠道', max_length=50, default='未知')
+
+    hotel = models.ForeignKey(Hotel_info, related_name='refundrules', on_delete=models.SET_NULL, null=True,
+                              verbose_name='酒店')
+
+    refundRuleId = models.CharField('取消条款编号', max_length=50, )  # 无
+    refundRuleType = models.IntegerField('取消条款规则', default=1)  # 无	当返回数据为空时，默认不可取消;1:不可退、2:限时取消
+    refundRuleHours = models.IntegerField('入住前n小时', default=30)  # 无	30
+    deductType = models.IntegerField('取消客人罚金', default=1)  # 无	1扣全额、0扣首晚房费
+
+    sys_create_time = models.DateTimeField('创建时间', auto_now_add=True)
+    sys_update_time = models.DateTimeField('更新时间', auto_now=True)
+    sys_create_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name='创建人')
+
+    class Meta:
+        managed = manageFlag
+        verbose_name = '取消条款信息'
+        verbose_name_plural = verbose_name
+        db_table = 'hotel_refundrule_info'
+
+
+class Hotel_Promotion_info(models.Model):
+    id = models.BigAutoField('编号', primary_key=True)
+    channel = models.CharField('渠道', max_length=50, default='未知')
+
+    startDate = models.CharField('礼包开始时间', max_length=200, default='')  # String	yyyy-MM-dd	在店时间生效
+    endDate = models.CharField('礼包结束时间', max_length=200, default='')  # String	yyyy-MM-dd
+    description = models.CharField('礼包描述', max_length=200, default='')  # String	无	礼包描述
+
+    RatePlan = models.ForeignKey(RatePlan_info, related_name='promotions', on_delete=models.SET_NULL, null=True,
+                                 verbose_name='酒店产品')
+
+    sys_create_time = models.DateTimeField('创建时间', auto_now_add=True)
+    sys_update_time = models.DateTimeField('更新时间', auto_now=True)
+    sys_create_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name='创建人')
+
+    class Meta:
+        managed = manageFlag
+        verbose_name = '礼包信息'
+        verbose_name_plural = verbose_name
+        db_table = 'hotel_promotion_info'
+
+
+class My____________________(object):
+    pass
+
+
+class Price_model_info(models.Model):
+    LEVEL_CHOICES = {
+        (0, '默认'),
+        (1, '节假日'),
+        (2, '自定义'),
+        (9, '最高级'),
+    }
+
+    price_model_id = models.BigAutoField(primary_key=True)
+    name = models.CharField('名称', max_length=100, default='无')
+    proportion = models.DecimalField('加价比列', max_digits=5, decimal_places=2, default=1.0)
+    level = models.IntegerField('优先级', default=0, choices=LEVEL_CHOICES)
+
+    sys_create_time = models.DateTimeField('创建时间', auto_now_add=True)
+    sys_update_time = models.DateTimeField('更新时间', auto_now=True)
+    sys_create_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name='创建人')
+
+    class Meta:
+        managed = manageFlag
+        verbose_name = '加价类型表'
+        verbose_name_plural = verbose_name
+        db_table = 'price_model_info'
 
 
 class Order_info(models.Model):

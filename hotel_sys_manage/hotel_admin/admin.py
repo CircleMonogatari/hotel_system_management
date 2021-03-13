@@ -171,8 +171,8 @@ class Proce_model_info_admin(admin.ModelAdmin):
     )
 
 
-@admin.register(models.Room_info)
-class Room_info_admin(admin.ModelAdmin):
+@admin.register(models.Room_type_info)
+class Room_type_info_admin(admin.ModelAdmin):
     list_display = (
         'roomTypeId',
         'roomTypeCn',
@@ -196,8 +196,8 @@ class Room_info_admin(admin.ModelAdmin):
     list_filter = ('basisroomCn',)
 
 
-@admin.register(models.Rate_info)
-class rate_info_admin(admin.ModelAdmin):
+@admin.register(models.Rate_type_info)
+class rate_type_info_admin(admin.ModelAdmin):
     list_display = (
         'rateTypeId',
         'rateTypeCn',

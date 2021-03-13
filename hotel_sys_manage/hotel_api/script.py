@@ -1,3 +1,4 @@
+import datetime
 import hashlib
 import json
 import os
@@ -54,7 +55,7 @@ class SZ_JL_API():
     def creater_city_info_list(self, data):
         city_list = []
         for info in data:
-            print(info)
+            info['channel'] = '深圳捷旅'
             c = models.City_info(**info)
             city_list.append(c)
         models.City_info.objects.bulk_create(city_list)
@@ -93,6 +94,8 @@ class SZ_JL_API():
                 if index == pageIndex:
                     continue
                 print(index)
+                timestamp = self.get_timestamp()
+                head = self.get_head(timestamp)
                 data = {
                     "head": head,
                     "data": {
@@ -109,13 +112,13 @@ class SZ_JL_API():
 
         pass
 
-    def ger_hotel_list(self):
+    def ger_hotel_list(self, page_index=1):
 
         url = 'http://58.250.56.211:8081/api/hotel/queryHotelList.json'
         timestamp = self.get_timestamp()
         head = self.get_head(timestamp)
 
-        baseindex = 1
+        baseindex = page_index
         data = {
             "head": head,
             "data": {
@@ -144,6 +147,7 @@ class SZ_JL_API():
                 index = i + 1 + baseindex
                 if index == pageIndex:
                     continue
+
                 print(index)
                 timestamp = self.get_timestamp()
                 head = self.get_head(timestamp)
@@ -172,9 +176,12 @@ class SZ_JL_API():
              'addressEn': 'Longquan Xinzhou scenic area next to the temple', 'phone': '0350-3365800',
              'longitude': '113.562590', 'latitude': '38.996081', 'sellType': 0, 'updateTime': '2019-07-15 16:49:36'}
 
+
+
             city = models.City_info.objects.get(cityId=info['cityId'])
             info['ciyt_info'] = city
-            info['star'] = str(info['star'])
+            info['star'] = str(info.get('star', 0))
+            info['hotelId'] = str(info['hotelId'])
             info['instantConfirmation'] = 0
             print(info)
             c = models.Hotel_info(**info)
@@ -187,7 +194,7 @@ class SZ_JL_API():
     STATIC_INFO_PARAMS_RATE = '3'
     STATIC_INFO_PARAMS_IMAGE = '4'
 
-    def get_hotel_static_info(self, hotelid, params='1'):
+    def get_hotel_static_info(self, hotelid, params='1,2,3,4'):
 
         # 不传默认1，多个逗号分隔。1需要酒店静态信息 2需要房型信息 3需要价格类型 4需要酒店图片
 
@@ -251,6 +258,42 @@ class SZ_JL_API():
         return json.loads("{'msg': 'error'}")
 
 
+    def get_queryChangedPrice(self, updateTime=None):
+        url = 'http://58.250.56.211:8081/api/hotel/queryChangedPrice.json?reqData=xxx'
+
+        timestamp = self.get_timestamp()
+        head = self.get_head(timestamp)
+
+        '''
+        结果代码	code	Integer	0	0表示请求成功；非0表示存在业务异常。
+        结果描述	errorMsg	String		错误描述
+        版本	version	String		3.0.0
+        结果对象	result	String		不同的请求是不同的对象，错误的请求一般返回为空
+        响应码	respId	String		单次响应的唯一编码，业务问题排查请提供编码
+        '''
+
+        {"head": {"appKey": "SZ28276", "timestamp": "1516816895000", "sign": "063cae11a00896187f80eecbf922364a",
+                  "version": "3.0.0"},
+         "data": {"updateTime": "2020-12-28 09:30:29"}}
+
+        data = {
+            "head": head,
+            "data": {"updateTime": "2017-12-28 09:30:29"}
+        }
+
+        # if updateTime is not None:
+        #     data['data'] = {'updateTime': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+
+
+        # 获取第一次数据
+        r = self.get(url, self.creater_payload(data))
+        if r.status_code == 200:
+            return json.loads(r.text)
+        return json.loads("{'msg': 'error'}")
+
+
+
 if __name__ == '__main__':
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "hotel_sys_manage.settings")
 
@@ -266,6 +309,13 @@ if __name__ == '__main__':
     # a.get_city_list()
 
     # 获取酒店数据
-    # a.ger_hotel_list()
+    # a.ger_hotel_list(2)
 
-    print(a.get_RatePlan('1', '2021-3-10', '2021-5-1'))
+    # 获取静态数据 参数 酒店id
+    # a.get_hotel_static_info('1')
+
+    # 获取报价
+    # print(a.get_RatePlan('1', '2021-3-10', '2021-5-1'))
+
+    # 获取变价
+    print(a.get_queryChangedPrice())

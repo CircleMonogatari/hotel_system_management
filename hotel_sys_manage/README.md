@@ -39,6 +39,8 @@ nld_monitor_sys
     python manage.py migrate       
     
     如果更换数据库, 需要重新创建管理员账号
+    python manage.py createsuperuser
+
 
 
 # Python 常用
@@ -53,14 +55,22 @@ nld_monitor_sys
         
     3.当前可能会出现 ssh过期的情况 解决办法
         -i http://pypi.douban.com/simple/ --trusted-host pypi.douban.com
+        
+    4. aliyun 源
+        -i https://mirrors.aliyun.com/pypi/simple/
 
 ## pycharm 进入django shell
 
     import os
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "nld_manage_sys.settings")
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "hotel_sys_manage.settings")
     
     import django
     django.setup()
+    
+    from hotel_api import script
+    from hotel_admin import models
+    
+    api = script.SZ_JL_API()
     
     
 

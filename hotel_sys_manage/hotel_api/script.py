@@ -35,9 +35,11 @@ class SZ_JL_API():
         print(r.url)
         return r
 
-    def post(self, url, data, body):
+    def post(self, url, data=None, ):
         # post
-        r = requests.post('http://httpbin.org/post', data={'key': 'value'})
+        r = requests.post(url, data=data)
+        print(r.url)
+        return r
 
     def get_head(self, timestamp):
         return {
@@ -110,8 +112,6 @@ class SZ_JL_API():
                     if len(result['hotelGeoList']) > 0:
                         self.creater_city_info_list(result['hotelGeoList'])
 
-        pass
-
     def ger_hotel_list(self, page_index=1):
 
         url = 'http://58.250.56.211:8081/api/hotel/queryHotelList.json'
@@ -176,8 +176,6 @@ class SZ_JL_API():
              'addressEn': 'Longquan Xinzhou scenic area next to the temple', 'phone': '0350-3365800',
              'longitude': '113.562590', 'latitude': '38.996081', 'sellType': 0, 'updateTime': '2019-07-15 16:49:36'}
 
-
-
             city = models.City_info.objects.get(cityId=info['cityId'])
             info['ciyt_info'] = city
             info['star'] = str(info.get('star', 0))
@@ -210,12 +208,10 @@ class SZ_JL_API():
             }
         }
 
-
         r = self.get(url, self.creater_payload(data))
         if r.status_code == 200:
             return json.loads(r.text)
-        return json.loads("{'msg': 'error'}")
-
+        return eval("{'code': -1, 'errorMsg': '返回失败'}")
 
     def get_RatePlan(self, hotelId, checkInDate, checkOutDate):
 
@@ -235,11 +231,10 @@ class SZ_JL_API():
 
         {"head":
              {"appKey": "SZ28276", "timestamp": "1516816895000", "sign": "063cae11a00896187f80eecbf922364a",
-                  "version": "3.0.1"
+              "version": "3.0.1"
               },
          "data": {"hotelId": 1, "checkInDate": "2018-01-10", "checkOutDate": "2018-01-20"}
          }
-
 
         data = {
             "head": head,
@@ -253,10 +248,8 @@ class SZ_JL_API():
         # 获取第一次数据
         r = self.get(url, self.creater_payload(data))
         if r.status_code == 200:
-
             return json.loads(r.text)
-        return json.loads("{'msg': 'error'}")
-
+        return eval("{'code': -1, 'errorMsg': '返回失败'}")
 
     def get_queryChangedPrice(self, updateTime=None):
         url = 'http://58.250.56.211:8081/api/hotel/queryChangedPrice.json?reqData=xxx'
@@ -276,22 +269,78 @@ class SZ_JL_API():
                   "version": "3.0.0"},
          "data": {"updateTime": "2020-12-28 09:30:29"}}
 
+        {"head": {"appKey": "SZ28276", "timestamp": "1516816895000", "sign": "063cae11a00896187f80eecbf922364a",
+                  "version": "3.0.0"}, "data": {"updateTime": "2017-12-28 09:30:29"}}
+
         data = {
             "head": head,
-            "data": {"updateTime": "2017-12-28 09:30:29"}
+            "data": {}
         }
+
+        print(data)
 
         # if updateTime is not None:
         #     data['data'] = {'updateTime': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-
-
 
         # 获取第一次数据
         r = self.get(url, self.creater_payload(data))
         if r.status_code == 200:
             return json.loads(r.text)
-        return json.loads("{'msg': 'error'}")
+        return eval("{'code': -1, 'errorMsg': '返回失败'}")
 
+    def get_queryOrderPrice(self, hotelId, keyId, checkInDate, checkOutDate, nightlyPrices, roomGroups):
+        url = '	http://58.250.56.211:8081/api/hotel/queryOrderPrice.json'
+        timestamp = self.get_timestamp()
+        head = self.get_head(timestamp)
+
+        '''
+            酒店编号	hotelId	Integer	是		无
+            产品编号	keyId	String	是		无
+            入住日期	checkInDate	String	是		yyyy-MM-dd
+            离店日期	checkOutDate	String	是		yyyy-MM-dd
+            每日价格	nightlyPrices	String	是		200.58|120.6|120.8
+            房间信息	roomGroups	RoomGroup[]	是	2成人	常用设置为1个房间2个成人
+        '''
+
+        {"head": {"appKey": "SZ28276", "timestamp": "1516816895000", "sign": "063cae11a00896187f80eecbf922364a",
+                  "version": "3.0.0"},
+         "data": {"updateTime": "2020-12-28 09:30:29"}}
+
+        data = {
+            "head": head,
+            'data': {
+                'hotelId': hotelId,
+                'keyId': keyId,
+                'checkInDate': checkInDate,
+                'checkOutDate': checkOutDate,
+                'nightlyPrices': nightlyPrices,
+                'roomGroups': roomGroups,
+            }
+        }
+
+        print(data)
+        {"head": {"appKey": "SZ28276", "timestamp": "1516816895000", "sign": "063cae11a00896187f80eecbf922364a",
+                  "version": "3.0.0"},
+         "data": {"hotelId": 171813, "keyId": "SGS8SD#4AA9A#DD#2#A", "checkInDate": "2018-06-21",
+                  "checkOutDate": "2018-06-23", "nightlyPrices": "150|150", "roomGroups": [{"adults": 2}]}}
+
+        {'code': 0, 'errorMsg': '', 'result': {'orderPrice': {'hotelRatePlans': [{'hotelId': 1, 'rooms': [
+            {'roomTypeId': '3191289', 'ratePlans': [
+                {'keyId': 'S#D6GGG4#DSHS28H#HHHGGHA#A', 'keyName': '商务楼豪华大床房', 'supplierId': 367774, 'bedName': '1张大床',
+                 'maxOccupancy': 2, 'currency': 'CNY', 'rateTypeId': '9997790', 'paymentType': 0, 'breakfast': 0,
+                 'bookingRuleId': '##W#7#W#9Q#Q#PW#WOEORO4O5OTO7#QQAQQ#RQAQQ', 'refundRuleId': '1', 'nightlyRates': [
+                    {'formulaType': 1, 'date': '2021-03-14', 'cose': 213.0, 'status': 3, 'currentAlloment': 0,
+                     'ifInvoice': 2}], 'market': 'ALL|-1'}]}], 'bookingRules': [
+            {'bookingRuleId': '##W#7#W#9Q#Q#PW#WOEORO4O5OTO7#QQAQQ#RQAQQ', 'minAmount': 1, 'maxAmount': 7, 'minDays': 1,
+             'maxDays': 90, 'minAdvHours': 0, 'maxAdvHours': -1, 'weekSet': '1,2,3,4,5,6,7', 'startTime': '00:00',
+             'endTime': '30:00', 'bookingNotices': ''}], 'refundRules': []}],
+                                                              'bookingMessage': {'code': 5, 'message': '满房'}}},
+         'respId': '6d8e0ef2-25c4-418e-8439-659d0ab0e3aa'}
+
+        r = self.post(url, data=self.creater_payload(data))
+        if r.status_code == 200:
+            return json.loads(r.text)
+        return eval("{'code': -1, 'errorMsg': '返回失败'}")
 
 
 if __name__ == '__main__':
@@ -319,3 +368,21 @@ if __name__ == '__main__':
 
     # 获取变价
     print(a.get_queryChangedPrice())
+
+    # 订单报价接口
+    hotelId = '1'
+    keyId = 'S#D6GGG4#DSHS28H#HHHGGHA#A'
+    checkInDate = '2021-4-14'
+    checkOutDate = '2021-4-15'
+    nightlyPrices = '213.0'
+    roomGroups = [
+        {
+            'adults': 2,
+            # children
+            # childAges
+        }
+    ]
+
+
+    # 订单报价
+    print(a.get_queryOrderPrice(hotelId, keyId, checkInDate, checkOutDate, nightlyPrices, roomGroups))

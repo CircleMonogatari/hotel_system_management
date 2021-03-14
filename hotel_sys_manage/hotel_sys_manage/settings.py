@@ -38,12 +38,17 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    'django.contrib.admindocs',
+
+    'django_filters',
+    'rest_framework',
+    'rest_framework_swagger',
+
     'hotel_admin',
     'hotel_task',
     'hotel_swagger',
 
-    'rest_framework',
-    'rest_framework_swagger',
+
 ]
 
 MIDDLEWARE = [

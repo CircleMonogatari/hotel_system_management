@@ -31,6 +31,7 @@ class City_infoSet(generics.ListCreateAPIView, generics.RetrieveUpdateDestroyAPI
 
     filter_backends = [DjangoFilterBackend]
     filter_fields = '__all__'
+    pagination_class = serializers.MyPagination
 
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
 
@@ -41,6 +42,7 @@ class Hotel_infoSet(generics.ListCreateAPIView, generics.RetrieveUpdateDestroyAP
 
     filter_backends = [DjangoFilterBackend]
     filter_fields = '__all__'
+    pagination_class = serializers.MyPagination
 
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
 
@@ -51,6 +53,7 @@ class Room_type_infoSet(generics.ListCreateAPIView, generics.RetrieveUpdateDestr
 
     filter_backends = [DjangoFilterBackend]
     filter_fields = '__all__'
+    pagination_class = serializers.MyPagination
 
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
 
@@ -61,6 +64,7 @@ class Rate_type_infoSet(generics.ListCreateAPIView, generics.RetrieveUpdateDestr
 
     filter_backends = [DjangoFilterBackend]
     filter_fields = '__all__'
+    pagination_class = serializers.MyPagination
 
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
 
@@ -71,6 +75,7 @@ class Room_image_infoSet(generics.ListCreateAPIView, generics.RetrieveUpdateDest
 
     filter_backends = [DjangoFilterBackend]
     filter_fields = '__all__'
+    pagination_class = serializers.MyPagination
 
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
 
@@ -81,6 +86,7 @@ class RatePlan_infoSet(generics.ListCreateAPIView, generics.RetrieveUpdateDestro
 
     filter_backends = [DjangoFilterBackend]
     filter_fields = '__all__'
+    pagination_class = serializers.MyPagination
 
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
 
@@ -92,6 +98,7 @@ class Hotel_NightlyRate_infoSet(generics.ListCreateAPIView, generics.RetrieveUpd
 
     filter_backends = [DjangoFilterBackend]
     filter_fields = '__all__'
+    pagination_class = serializers.MyPagination
 
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
 
@@ -103,6 +110,7 @@ class Hotel_BookingRule_infoSet(generics.ListCreateAPIView, generics.RetrieveUpd
 
     filter_backends = [DjangoFilterBackend]
     filter_fields = '__all__'
+    pagination_class = serializers.MyPagination
 
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
 
@@ -114,6 +122,7 @@ class Hotel_RefundRule_infoSet(generics.ListCreateAPIView, generics.RetrieveUpda
 
     filter_backends = [DjangoFilterBackend]
     filter_fields = '__all__'
+    pagination_class = serializers.MyPagination
 
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
 
@@ -125,6 +134,7 @@ class Hotel_Promotion_infoSet(generics.ListCreateAPIView, generics.RetrieveUpdat
 
     filter_backends = [DjangoFilterBackend]
     filter_fields = '__all__'
+    pagination_class = serializers.MyPagination
 
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
 
@@ -135,6 +145,9 @@ class Price_model_infoSet(generics.ListCreateAPIView, generics.RetrieveUpdateDes
 
     filter_backends = [DjangoFilterBackend]
     filter_fields = '__all__'
+    pagination_class = serializers.MyPagination
+
+
 
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
 
@@ -145,6 +158,7 @@ class Order_infoSet(generics.ListCreateAPIView, generics.RetrieveUpdateDestroyAP
 
     filter_backends = [DjangoFilterBackend]
     filter_fields = '__all__'
+    pagination_class = serializers.MyPagination
 
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
 

@@ -247,9 +247,24 @@ class SZ_JL_API():
 
         # 获取第一次数据
         r = self.get(url, self.creater_payload(data))
+        body = {}
         if r.status_code == 200:
-            return json.loads(r.text)
-        return eval("{'code': -1, 'errorMsg': '返回失败'}")
+            body = json.loads(r.text)
+
+        res = {}
+        res['errorMsg'] = body.get('errorMsg', '')
+        if body.get('code', -1) == 0:
+            result = body.get('result', {})
+            hotelRatePlanList = result.get('hotelRatePlanList', {})
+            if len(hotelRatePlanList) > 0:
+                try:
+                    res['rooms'] = hotelRatePlanList[0].get('rooms', [])
+                    res['bookingRules'] = hotelRatePlanList[0].get('bookingRules', [])
+                    res['refundRules'] = hotelRatePlanList[0].get('refundRules', [])
+                except Exception as e:
+                    print(e)
+
+        return res
 
     def get_queryChangedPrice(self, updateTime=None):
         url = 'http://58.250.56.211:8081/api/hotel/queryChangedPrice.json?reqData=xxx'
@@ -343,6 +358,38 @@ class SZ_JL_API():
         return eval("{'code': -1, 'errorMsg': '返回失败'}")
 
 
+def demo():
+    a = SZ_JL_API()
+    data = a.get_hotel_static_info('1')
+    hotel = models.Hotel_info.objects.all()[0]
+    if data.get('code', -1) == 0:
+        hotelDetailList = data.get('result', {}).get('hotelDetailList', [])
+        if len(hotelDetailList) > 0:
+            # 酒店信息
+            hotelInfo = hotelDetailList[0].get('hotelInfo', {})
+            roomTypeList = hotelDetailList[0].get('roomTypeList', [])
+            rateTypeList = hotelDetailList[0].get('rateTypeList', [])
+            imageList = hotelDetailList[0].get('imageList', [])
+
+            # 静态信息
+            res = hotel.set_puls_info(hotelInfo)
+
+            # 房间信息 价格类型 静态图片
+            hotel.refresh_puls_static_info(roomTypeList, rateTypeList, imageList)
+
+    pass
+
+
+def demo2():
+    a = SZ_JL_API()
+    data = a.get_RatePlan('1', '2021-3-18', '2021-3-30')
+
+
+
+
+
+
+
 if __name__ == '__main__':
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "hotel_sys_manage.settings")
 
@@ -354,20 +401,28 @@ if __name__ == '__main__':
     print('request start')
     a = SZ_JL_API()
 
+    # ok
     # 获取城市
     # a.get_city_list()
 
+    # ok
     # 获取酒店数据
     # a.ger_hotel_list(2)
 
+    # ok 测试过一个
     # 获取静态数据 参数 酒店id
     # a.get_hotel_static_info('1')
+    # demo()
 
+
+
+    #
     # 获取报价
     # print(a.get_RatePlan('1', '2021-3-10', '2021-5-1'))
+    demo2()
 
     # 获取变价
-    print(a.get_queryChangedPrice())
+    # print(a.get_queryChangedPrice())
 
     # 订单报价接口
     hotelId = '1'
@@ -385,4 +440,4 @@ if __name__ == '__main__':
 
 
     # 订单报价
-    print(a.get_queryOrderPrice(hotelId, keyId, checkInDate, checkOutDate, nightlyPrices, roomGroups))
+    # print(a.get_queryOrderPrice(hotelId, keyId, checkInDate, checkOutDate, nightlyPrices, roomGroups))

@@ -114,9 +114,9 @@ class Hotel_info(models.Model):
 
     def refresh_puls_static_info(self, roomTypeList, rateTypeList, imageList):
         res = False
-        res = False and self.creater_rooms(roomTypeList)
-        res = False and self.creater_rateTypeList(rateTypeList)
-        res = False and self.creater_imageList(imageList)
+        res = self.creater_rooms(roomTypeList) | res
+        res = self.creater_rateTypeList(rateTypeList) | res
+        res = self.creater_imageList(imageList) | res
 
         return res
 

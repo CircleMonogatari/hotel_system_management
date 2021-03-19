@@ -6,8 +6,8 @@ from hotel_api import script
 
 # Register your models here.
 
-admin.site.site_header = '测试系统'  # 设置header
-admin.site.site_title = '测试系统'  # 设置title
+admin.site.site_header = '坤齐酒店管理系统'  # 设置header
+admin.site.site_title = '坤齐酒店管理系统'  # 设置title
 
 API = script.SZ_JL_API()
 
@@ -161,6 +161,34 @@ class Hotel_info_admin(admin.ModelAdmin):
     refresh_hotel_info.style = 'color:black;'
 
 
+    # 更新产品信息
+    def refresh_hotel_rateplan_info(self, request, queryset):
+        message_map = {
+            True: 0,
+            False: 0,
+            'plus': 0,
+
+        }
+        for hotel in queryset:
+
+            pass
+
+        messages.add_message(request, messages.SUCCESS, '成功写入{}条数据'.format(message_map[True]))
+        messages.add_message(request, messages.ERROR, '失败{}条'.format(message_map[False]))
+        if message_map['plus'] > 0:
+            messages.add_message(request, messages.ERROR, '扩展信息失败{}条'.format(message_map['plus']))
+        pass
+    # admin 样式
+    refresh_hotel_rateplan_info.short_description = '更新酒店产品'
+    # icon，参考element-ui icon与https://fontawesome.com
+    refresh_hotel_rateplan_info.icon = 'el-icon-goods'
+    # 指定element-ui的按钮类型，参考https://element.eleme.cn/#/zh-CN/component/button
+    refresh_hotel_rateplan_info.type = 'danger'
+    # 给按钮追加自定义的颜色
+    refresh_hotel_rateplan_info.style = 'color:blue;'
+
+
+
 @admin.register(models.Price_model_info)
 class Proce_model_info_admin(admin.ModelAdmin):
     list_display = (
@@ -218,7 +246,7 @@ class room_image_info_admin(admin.ModelAdmin):
         'imagetype',
         'roomTypeIds',
         'thumbUrl',
-        'imageUrl',
+        'image_data',
         'imageLogo',
         'imageSize',
         'hotel',

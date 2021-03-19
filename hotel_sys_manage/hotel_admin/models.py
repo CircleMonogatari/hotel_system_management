@@ -2,6 +2,8 @@ from django.contrib.auth.models import User
 from django.db import models
 
 # Create your models here.
+from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 
 manageFlag = True
 
@@ -99,8 +101,8 @@ class Hotel_info(models.Model):
     facilities = models.CharField('酒店设施', max_length=500, default='无')  # 11|12|13|14|15|17|18|19|20|22|23|24|21|73
     cardType = models.CharField('信用卡', max_length=500, default='无')  # Master,VISA,JCB,UnionPay,
     minPrice = models.DecimalField('酒店最低价', max_digits=5, decimal_places=2, default=0.0)  # 0
-    introduceCn = models.CharField('酒店中文介绍', max_length=500, default='无')  #
-    introduceEn = models.CharField('酒店英文介绍', max_length=500, default='无')  #
+    introduceCn = models.TextField('酒店中文介绍', default='无')  #
+    introduceEn = models.TextField('酒店英文介绍', default='无')  #
 
     sys_create_time = models.DateTimeField('创建时间', auto_now_add=True)
     sys_update_time = models.DateTimeField('更新时间', auto_now=True)
@@ -111,6 +113,9 @@ class Hotel_info(models.Model):
         verbose_name = '酒店信息表'
         verbose_name_plural = verbose_name
         db_table = 'hotel_info'
+
+    def __str__(self):
+        return self.hotelNameCn
 
     def refresh_puls_static_info(self, roomTypeList, rateTypeList, imageList):
         res = False
@@ -223,6 +228,108 @@ class Hotel_info(models.Model):
             return False
         return True
 
+    def update_bookingRules(self, bookingRules):
+        hotelId = self.hotelId
+        channel = self.channel
+        pass
+
+    def update_refundRules(self, refundRules):
+
+        channel = self.channel
+
+        for re in refundRules:
+            refundRuleId = re.get('refundRuleId', '')
+            data = {
+                'channel': channel,
+                'hotel': self,
+
+                'refundRuleId': '',
+                'refundRuleType': '',
+                'refundRuleHours': '',
+                'deductType': '',
+            }
+
+        res = Hotel_RefundRule_info.objects.get_or_create(channel=channel, refundRuleId=refundRuleId, hotel=self)
+        if res[1] is False:
+            print('数据覆盖 原{}, 改{}'.format(res[0], data))
+        RefundRule = res[0]
+
+        for k in data:
+            setattr(RefundRule, k, data.get(k))
+        RefundRule.save()
+
+    def update_nightlyRates(self, nightlyRates, Rateplan):
+        hotelId = self.hotelId
+        channel = self.channel
+
+        for n in nightlyRates:
+
+            data = {
+                'channel': n.get('channel', ''),
+                'formulaTypen': str(n.get('formulaType', '')),
+                'date': n.get('date', ''),
+                'cose': n.get('cose', 0.0),
+                'status': n.get('status', 0),
+                'currentAlloment': n.get('currentAlloment', 0),
+
+                # 'breakfast': n.get('breakfast', ''),
+                # 'bookingRuleId': n.get('bookingRuleId', ''),
+                # 'refundRuleId': n.get('refundRuleId', ''),
+                'hotel': self,
+                'Rateplan': Rateplan,
+            }
+
+            res = Hotel_NightlyRate_info.objects.get_or_create(channel=channel, hotel=self, Rateplan=Rateplan,
+                                                               date=n.get('date', ''))
+
+            if res[1] is False:
+                print('数据覆盖 原{}, 改{}'.format(res[0], data))
+            nightlyrate = res[0]
+
+            for k in data:
+                setattr(nightlyrate, k, data.get(k))
+            nightlyrate.save()
+
+        pass
+
+    def update_rateplan(self, rooms):
+        hotelId = self.hotelId
+        channel = self.channel
+
+        for room in rooms:
+            ratePlan = room.get('ratePlans', [{}, ])[0]
+            keyId = room.get('keyId', '')
+            rate_data = {
+
+                'channel': channel,
+                'keyId': ratePlan.get('keyId', ''),
+                'supplierId': ratePlan.get('supplierId', 0),
+                'keyName': ratePlan.get('keyName', ''),
+                'bedName': ratePlan.get('bedName', ''),
+                'maxOccupancy': ratePlan.get('maxOccupancy', -1),
+                'currency': ratePlan.get('currency', '无'),
+                'rateTypeId': ratePlan.get('rateTypeId', '0'),
+                'paymentType': ratePlan.get('paymentType', 0),
+                'breakfast': ratePlan.get('breakfast', 0),
+                'ifInvoice': ratePlan.get('paymentType', 0),
+                'bookingRuleId': ratePlan.get('bookingRuleId', ''),
+                'refundRuleId': ratePlan.get('refundRuleId', ''),
+                'market': ratePlan.get('market', ''),
+            }
+
+            res = models.RatePlan_info.objects.get_or_create(channel=channel, keyId=keyId)
+
+            if res[1] is False:
+                print('数据覆盖 原{}, 改{}'.format(res[0], rate_data))
+            rate = res[0]
+
+            for k in rate_data:
+                setattr(rate, k, rate_data.get(k))
+            rate.save()
+
+            nightlyRates = ratePlan.get('nightlyRates', [])
+            self.update_nightlyRates(nightlyRates)
+
 
 class Room_type_info(models.Model):
     id = models.BigAutoField('编号', primary_key=True)
@@ -330,6 +437,17 @@ class Room_image_info(models.Model):
         verbose_name = '房间图片信息表'
         verbose_name_plural = verbose_name
         db_table = 'room_image_info'
+
+    @property
+    def image_data(self):
+        if self.imageUrl:
+            # return format_html(
+            return format_html('<img src="{}" width="156px" height="98px"/>', self.imageUrl)
+        else:
+            return format_html(
+                # '<img src="/media/无拍照上传.png" width="156px" height="98px"/>',
+                '无'
+            )
 
 
 class RatePlan_info(models.Model):

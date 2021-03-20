@@ -62,9 +62,6 @@ class Hotel_info_admin(admin.ModelAdmin):
     list_display = (
 
         'hotelId',
-        'countryId',
-        'stateId',
-        'cityId',
         'ciyt_info',
         'star',
         'hotelNameCn',
@@ -111,45 +108,21 @@ class Hotel_info_admin(admin.ModelAdmin):
     # actions = ['record_create']
 
     # 增加自定义按钮
-    actions = ['refresh_hotel_info', ]
+    actions = ['refresh_hotel_info', 'refresh_hotel_rateplan_info']
 
     # 更新静态信息
     def refresh_hotel_info(self, request, queryset):
-
         message_map = {
             True: 0,
             False: 0,
-            'plus': 0,
-
         }
 
         for hotel in queryset:
-            data = API.get_hotel_static_info(str(hotel.pk), '1,2,3,4')
-            if data.get('code', -1) == 0:
-                hotelDetailList = data.get('result', {}).get('hotelDetailList', [])
-                if len(hotelDetailList) > 0:
-                    # 酒店信息
-                    hotelInfo = hotelDetailList[0].get('hotelInfo', {})
-                    roomTypeList = hotelDetailList[0].get('roomTypeList', [])
-                    rateTypeList = hotelDetailList[0].get('rateTypeList', [])
-                    imageList = hotelDetailList[0].get('imageList', [])
-
-                    # 静态信息
-                    res = hotel.set_puls_info(hotelInfo)
-
-                    # 房间信息 价格类型 静态图片
-                    if hotel.refresh_puls_static_info(roomTypeList, rateTypeList, imageList) is False:
-                        message_map['plus'] = message_map['plus'] + 1
-
-                    message_map[res] = message_map[res] + 1
-                else:
-                    print('Error :refresh_hotel_info--{}'.format(hotelInfo))
-                    message_map[False] = message_map[False] + 1
+            res = hotel.refresh_puls_static_info()
+            message_map[res] = message_map[res] + 1
 
         messages.add_message(request, messages.SUCCESS, '成功写入{}条数据'.format(message_map[True]))
         messages.add_message(request, messages.ERROR, '失败{}条'.format(message_map[False]))
-        if message_map['plus'] > 0:
-            messages.add_message(request, messages.ERROR, '扩展信息失败{}条'.format(message_map['plus']))
 
     # admin 样式
     refresh_hotel_info.short_description = '更新酒店信息'
@@ -160,24 +133,25 @@ class Hotel_info_admin(admin.ModelAdmin):
     # 给按钮追加自定义的颜色
     refresh_hotel_info.style = 'color:black;'
 
-
     # 更新产品信息
     def refresh_hotel_rateplan_info(self, request, queryset):
         message_map = {
             True: 0,
             False: 0,
-            'plus': 0,
-
         }
         for hotel in queryset:
+            message_map = {
+                True: 0,
+                False: 0,
+            }
 
-            pass
+            for hotel in queryset:
+                res = hotel.refresh_rateplan_info()
+                message_map[res] = message_map[res] + 1
 
         messages.add_message(request, messages.SUCCESS, '成功写入{}条数据'.format(message_map[True]))
         messages.add_message(request, messages.ERROR, '失败{}条'.format(message_map[False]))
-        if message_map['plus'] > 0:
-            messages.add_message(request, messages.ERROR, '扩展信息失败{}条'.format(message_map['plus']))
-        pass
+
     # admin 样式
     refresh_hotel_rateplan_info.short_description = '更新酒店产品'
     # icon，参考element-ui icon与https://fontawesome.com
@@ -186,7 +160,6 @@ class Hotel_info_admin(admin.ModelAdmin):
     refresh_hotel_rateplan_info.type = 'danger'
     # 给按钮追加自定义的颜色
     refresh_hotel_rateplan_info.style = 'color:blue;'
-
 
 
 @admin.register(models.Price_model_info)

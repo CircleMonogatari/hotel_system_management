@@ -19,6 +19,148 @@ class SZ_JL_API():
     CS_SECRETKEY = '123456'
     CS_APPKEY = 'SZ28276'
 
+    def GetData(self, url, data):
+        timestamp = self.get_timestamp()
+        head = self.get_head(timestamp)
+
+        body = {
+            "head": head,
+            "data": data
+        }
+
+        r = self.get(url, self.creater_payload(body))
+        if r.status_code == 200:
+            return json.loads(r.text)
+        return eval("{'code': -1, 'errorMsg': '返回失败'}")
+
+    def PostData(self, url, data):
+        timestamp = self.get_timestamp()
+        head = self.get_head(timestamp)
+
+        body = {
+            "head": head,
+            'data': data
+        }
+
+        # result = data.get('result', {}).get('changedPrice', {})
+        r = self.post(url, data=self.creater_payload(body))
+        if r.status_code == 200:
+            return json.loads(r.text)
+        return eval("{'code': -1, 'errorMsg': '返回失败'}")
+
+    urlDict = {
+        'queryCity': 'http://58.250.56.211:8081/api/city/queryCity.json',
+        'queryHotelList': 'http://58.250.56.211:8081/api/hotel/queryHotelList.json',
+        'queryHotelDetail': 'http://58.250.56.211:8081/api/hotel/queryHotelDetail.json',
+        'queryRatePlan': 'http://58.250.56.211:8081/api/hotel/queryRatePlan.json',
+        'queryChangedPrice': 'http://58.250.56.211:8081/api/hotel/queryChangedPrice.json',
+        'queryOrderPrice': 'http://58.250.56.211:8081/api/hotel/queryOrderPrice.json',
+        'createOrder': 'http://58.250.56.211:8081/api/order/createOrder.json',
+        'cancelOrder': 'http://58.250.56.211:8081/api/order/cancelOrder.json',
+        'queryOrderDetail': 'http://58.250.56.211:8081/api/order/queryOrderDetail.json',
+    }
+
+    def JL_queryCity(self, data):
+        """
+            "data": {"pageIndex": 0,"pageSize":100}
+        """
+        url = self.urlDict['queryCity']
+        res = self.GetData(url, data)
+        if res.get('code', -1) != 0:
+            print(res)
+            return {}
+        return res.get('result', {})
+
+    def JL_queryHotelList(self, data):
+        """
+            data = {"countryId":"70007","pageIndex":0,"pageSize":2}
+        """
+        url = self.urlDict['queryHotelList']
+        res = self.GetData(url, data)
+        if res.get('code', -1) != 0:
+            print(res)
+            return {}
+        return res.get('result', {})
+
+    def JL_queryHotelDetail(self, hotelid):
+
+        url = self.urlDict['queryHotelDetail']
+        res = self.GetData(url, {"hotelId": hotelid, "params": "1,2,3,4"})
+        if res.get('code', -1) != 0:
+            print(res)
+            return {}
+        return res.get('result', {}).get('hotelDetailList', [])[0]
+
+    def JL_queryRatePlan(self, hotelId, checkInDate, checkOutDate):
+        """
+        每次获取指定日期往后推14天的数据， 需要多次获取
+        data = {"hotelId":1,"checkInDate":"2018-01-10","checkOutDate":"2018-01-20"}
+        """
+        url = self.urlDict['queryRatePlan']
+        res = self.GetData(url, {"hotelId": hotelId, "checkInDate": checkInDate, "checkOutDate": checkOutDate})
+        if res.get('code', -1) != 0:
+            print(res)
+            return {}
+        return res.get('result', {}).get('hotelRatePlanList', [])[0]
+
+    def JL_queryChangedPrice(self, updateTime):
+        """
+            当前时间 -1 分钟
+            data = {"updateTime": "2017-12-28 09:30:29"}}
+        """
+        url = self.urlDict['queryChangedPrice']
+        res = self.GetData(url, {"updateTime": updateTime})
+        if res.get('code', -1) != 0:
+            print(res)
+            return {}
+        return res.get('result', {}).get('changedPrice', {})
+
+    def JL_queryOrderPrice(self, data):
+        """
+            data =  {"hotelId": 171813, "keyId": "SGS8SD#4AA9A#DD#2#A", "checkInDate": "2018-06-21",
+                  "checkOutDate": "2018-06-23", "nightlyPrices": "150|150", "roomGroups": [{"adults": 2}]}
+        """
+        url = self.urlDict['queryOrderPrice']
+
+        res = self.GetData(url, data)
+        if res.get('code', -1) != 0:
+            print(res)
+            return {}
+        return res.get('result', {})
+
+    def JL_createOrder(self, data):
+        """
+
+        data = {
+        "customerOrderCode":"R15644321358",
+        "hotelId":171870,"keyId":"SGS8GA#4A2SG#S2F262#S2F244#A||13#1318581569168081061#||EQW7PWEPEW","checkInDate":"2017-12-21","checkOutDate":"2017-12-23","nightlyPrices":"601|601","roomGroups":[{"adults":2,"checkInPersions":[{"lastName":"姓名","firstName":"test"}]}],"hotelRemark":"酒店备注","totalPrice":1202.0}
+        """
+        url = self.urlDict['createOrder']
+
+        res = self.GetData(url, data)
+        if res.get('code', -1) != 0:
+            print(res)
+            return {}
+        return res.get('result', {})
+
+    def JL_cancelOrder(self, data):
+        url = self.urlDict['cancelOrder']
+
+        res = self.GetData(url, data)
+        if res.get('code', -1) != 0:
+            print(res)
+            return {}
+        return res.get('result', {})
+
+    def JL_queryOrderDetail(self, data):
+        url = self.urlDict['queryOrderDetail']
+
+        res = self.GetData(url, data)
+        if res.get('code', -1) != 0:
+            print(res)
+            return {}
+        return res.get('result', {})
+
     def get_timestamp(slef):
         return str(int(time.time() * 1000))
 
@@ -267,7 +409,7 @@ class SZ_JL_API():
         return res
 
     def get_queryChangedPrice(self, updateTime=None):
-        url = 'http://58.250.56.211:8081/api/hotel/queryChangedPrice.json?reqData=xxx'
+        url = 'http://58.250.56.211:8081/api/hotel/queryChangedPrice.json'
 
         timestamp = self.get_timestamp()
         head = self.get_head(timestamp)
@@ -333,26 +475,93 @@ class SZ_JL_API():
             }
         }
 
-        print(data)
+        # result = data.get('result', {}).get('changedPrice', {})
+        r = self.post(url, data=self.creater_payload(data))
+        if r.status_code == 200:
+            return json.loads(r.text)
+        return eval("{'code': -1, 'errorMsg': '返回失败'}")
+
+    def createOrder(self, data):
+        url = 'http://58.250.56.211:8081/api/order/createOrder.json'
+
+        {"head":
+             {"appKey": "SZ28276", "timestamp": "1516816895000", "sign": "063cae11a00896187f80eecbf922364a",
+              "version": "3.0.0"},
+         "data":
+             {
+                 "customerOrderCode": "R15644321358",
+                 "hotelId": 171870,
+                 "keyId": "SGS8GA#4A2SG#S2F262#S2F244#A||13#1318581569168081061#||EQW7PWEPEW",
+                 "checkInDate": "2017-12-21",
+                 "checkOutDate": "2017-12-23",
+                 "nightlyPrices": "601|601",
+                 "roomGroups":
+                     [
+                         {"adults": 2, "checkInPersions": [{"lastName": "姓名", "firstName": "test"}]
+                          }
+                     ],
+                 "hotelRemark": "酒店备注",
+                 "totalPrice": 1202.0
+             }
+         }
+
+        timestamp = self.get_timestamp()
+        head = self.get_head(timestamp)
+
+        body = {
+            "head": head,
+            'data': data
+        }
+
+        # result = data.get('result', {}).get('changedPrice', {})
+        r = self.post(url, data=self.creater_payload(body))
+        if r.status_code == 200:
+            return json.loads(r.text)
+        return eval("{'code': -1, 'errorMsg': '返回失败'}")
+
+    def queryOrderDetail(self, data):
+        url = 'http://58.250.56.211:8081/api/order/queryOrderDetail.json'
+
+        timestamp = self.get_timestamp()
+        head = self.get_head(timestamp)
+
         {"head": {"appKey": "SZ28276", "timestamp": "1516816895000", "sign": "063cae11a00896187f80eecbf922364a",
                   "version": "3.0.0"},
-         "data": {"hotelId": 171813, "keyId": "SGS8SD#4AA9A#DD#2#A", "checkInDate": "2018-06-21",
-                  "checkOutDate": "2018-06-23", "nightlyPrices": "150|150", "roomGroups": [{"adults": 2}]}}
+         "data": {
+             "orderCode": "P17122700035",
+             "customerOrderCode": "R15644321361"
+         }
+         }
 
-        {'code': 0, 'errorMsg': '', 'result': {'orderPrice': {'hotelRatePlans': [{'hotelId': 1, 'rooms': [
-            {'roomTypeId': '3191289', 'ratePlans': [
-                {'keyId': 'S#D6GGG4#DSHS28H#HHHGGHA#A', 'keyName': '商务楼豪华大床房', 'supplierId': 367774, 'bedName': '1张大床',
-                 'maxOccupancy': 2, 'currency': 'CNY', 'rateTypeId': '9997790', 'paymentType': 0, 'breakfast': 0,
-                 'bookingRuleId': '##W#7#W#9Q#Q#PW#WOEORO4O5OTO7#QQAQQ#RQAQQ', 'refundRuleId': '1', 'nightlyRates': [
-                    {'formulaType': 1, 'date': '2021-03-14', 'cose': 213.0, 'status': 3, 'currentAlloment': 0,
-                     'ifInvoice': 2}], 'market': 'ALL|-1'}]}], 'bookingRules': [
-            {'bookingRuleId': '##W#7#W#9Q#Q#PW#WOEORO4O5OTO7#QQAQQ#RQAQQ', 'minAmount': 1, 'maxAmount': 7, 'minDays': 1,
-             'maxDays': 90, 'minAdvHours': 0, 'maxAdvHours': -1, 'weekSet': '1,2,3,4,5,6,7', 'startTime': '00:00',
-             'endTime': '30:00', 'bookingNotices': ''}], 'refundRules': []}],
-                                                              'bookingMessage': {'code': 5, 'message': '满房'}}},
-         'respId': '6d8e0ef2-25c4-418e-8439-659d0ab0e3aa'}
+        body = {
+            "head": head,
+            'data': data
+        }
 
-        r = self.post(url, data=self.creater_payload(data))
+        # result = data.get('result', {}).get('changedPrice', {})
+        r = self.get(url, self.creater_payload(body))
+        if r.status_code == 200:
+            return json.loads(r.text)
+        return eval("{'code': -1, 'errorMsg': '返回失败'}")
+
+    def cancelOrder(self, data):
+        url = 'http://58.250.56.211:8081/api/order/cancelOrder.json'
+
+        timestamp = self.get_timestamp()
+        head = self.get_head(timestamp)
+
+        {"head": {"appKey": "SZ28276", "timestamp": "1516816895000", "sign": "063cae11a00896187f80eecbf922364a",
+                  "format": "json"},
+         "data": {"orderCode": "JLA20118011354949", "cancelRemark": "飞机延误"}
+         }
+
+        body = {
+            "head": head,
+            'data': data
+        }
+
+        # result = data.get('result', {}).get('changedPrice', {})
+        r = self.get(url, self.creater_payload(body))
         if r.status_code == 200:
             return json.loads(r.text)
         return eval("{'code': -1, 'errorMsg': '返回失败'}")
@@ -382,12 +591,41 @@ def demo():
 
 def demo2():
     a = SZ_JL_API()
-    data = a.get_RatePlan('1', '2021-3-18', '2021-3-30')
+    # 当前时间
+    d1 = datetime.datetime.now()
+    # 未来几天
+    d3 = d1 + datetime.timedelta(days=10)
+    data = a.get_RatePlan('1', d1.strftime('%Y-%m-%d'), d3.strftime('%Y-%m-%d'))
 
 
+def demo3():
+    data = {
+        "customerOrderCode": "R15644321358",
+        "hotelId": 171870,
+        "keyId": "SGS8GA#4A2SG#S2F262#S2F244#A||13#1318581569168081061#||EQW7PWEPEW",
+        "checkInDate": "2017-12-21",
+        "checkOutDate": "2017-12-23",
+        "nightlyPrices": "601|601",
+        "roomGroups":
+            [
+                {
+                    "adults": 2, "checkInPersions": [{"lastName": "姓名", "firstName": "test"}]
+                }
+            ],
+        "hotelRemark": "酒店备注",
+        "totalPrice": 1202.0
+    }
+
+    a = SZ_JL_API()
+
+    res = a.createOrder(data)
 
 
-
+def demo4():
+    data = {
+        "orderCode": "P17122700035",
+        "customerOrderCode": "R15644321361"
+    }
 
 
 if __name__ == '__main__':
@@ -400,6 +638,45 @@ if __name__ == '__main__':
 
     print('request start')
     a = SZ_JL_API()
+
+    # print(a.JL_queryCity({"pageIndex": 0,"pageSize":100}))
+    # print(a.JL_queryHotelList({"countryId": "70007", "pageIndex": 0, "pageSize": 2}))
+    # print(a.JL_queryHotelDetail({"hotelId": 15, "params": "1,2,3,4"}))
+
+    # 当前时间
+    d1 = datetime.datetime.now()
+    # 未来几天
+    d3 = d1 + datetime.timedelta(days=10)
+
+    data = a.JL_queryRatePlan('171813', d1.strftime('%Y-%m-%d'), d3.strftime('%Y-%m-%d'))
+
+    print(data)
+
+    d2 = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    # print(a.JL_queryChangedPrice({"updateTime": d2}))
+
+    a.JL_queryOrderPrice({"hotelId": 171813, "keyId": "SGS8SD#4AA9A#DD#2#A", "checkInDate": "2018-06-21",
+                          "checkOutDate": "2018-06-23", "nightlyPrices": "150|150", "roomGroups": [{"adults": 2}]})
+
+    data = {
+        "customerOrderCode": "R15644321358",
+        "hotelId": 171870,
+        "keyId": 'SGS8SD#4AAHA#SF#2#A',
+        "checkInDate": "2017-12-21",
+        "checkOutDate": "2017-12-23",
+        "nightlyPrices": "601|601",
+        "roomGroups": [
+            {
+                "adults": 2,
+                "checkInPersions": [
+                    {"lastName": "姓名", "firstName": "test"}
+                ]
+            }
+        ],
+        "hotelRemark": "酒店备注",
+        "totalPrice": 1202.0}
+
+    a.JL_createOrder(data)
 
     # ok
     # 获取城市
@@ -414,13 +691,11 @@ if __name__ == '__main__':
     # a.get_hotel_static_info('1')
     # demo()
 
-
-
-    #
     # 获取报价
-    # print(a.get_RatePlan('1', '2021-3-10', '2021-5-1'))
-    demo2()
+    # print(a.get_RatePlan('1', '2021-3-21', '2021-5-1'))
+    # demo2()
 
+    # ok
     # 获取变价
     # print(a.get_queryChangedPrice())
 
@@ -438,6 +713,15 @@ if __name__ == '__main__':
         }
     ]
 
-
     # 订单报价
     # print(a.get_queryOrderPrice(hotelId, keyId, checkInDate, checkOutDate, nightlyPrices, roomGroups))
+
+    # 创建订单
+    # a.createOrder()
+    # demo3()
+
+    # 查询订单接口
+    # a.queryOrderDetail()
+    # demo4()
+
+    # a.cancelOrder()

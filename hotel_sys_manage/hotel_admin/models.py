@@ -1,9 +1,13 @@
+import datetime
+
 from django.contrib.auth.models import User
 from django.db import models
 
 # Create your models here.
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
+
+from hotel_api import script
 
 manageFlag = True
 
@@ -117,8 +121,119 @@ class Hotel_info(models.Model):
     def __str__(self):
         return self.hotelNameCn
 
-    def refresh_puls_static_info(self, roomTypeList, rateTypeList, imageList):
+    def refresh_rateplan_info(self):
         res = False
+
+        api = script.SZ_JL_API()
+
+        # 当前时间
+        d1 = datetime.datetime.now()
+        # 未来几天
+        d3 = d1 + datetime.timedelta(days=14)
+
+        data = api.JL_queryRatePlan(self.hotelId, d1.strftime('%Y-%m-%d'), d3.strftime('%Y-%m-%d'))
+        rooms = data.get('rooms', [])
+        bookingRules = data.get('bookingRules', [])
+        refundRules = data.get('refundRules', [])
+
+        res = self.refresh_rate_rooms(rooms) | res
+        res = self.refresh_rate_bookingRules(bookingRules) | res
+        res = self.refresh_rate_refundRules(refundRules) | res
+
+
+        return res
+        pass
+
+    def refresh_rate_rooms(self, rooms):
+        res = False
+        for room in rooms:
+            roomTypeId = room.get('roomTypeId', '')
+            ratePlans = room.get('ratePlans', [])
+            room_types = Room_type_info.objects.filter(roomTypeId=roomTypeId)
+            if room_types.exists() is False:
+                return False
+            room_type = room_types[0]
+            res = room_type.update_ratePlans(ratePlans) | res
+
+        return res
+
+    def refresh_rate_bookingRules(self, bookingRules):
+        try:
+            for bookingRule in bookingRules:
+
+                bookingRuleId = bookingRule.get('bookingRuleId', '')
+
+                startDate = bookingRule.get('startDate', '')
+                endDate = bookingRule.get('endDate', '')
+
+                data = {
+
+
+                    'minAmount': bookingRule.get('minAmount', -1),
+                    'maxAmount': bookingRule.get('maxAmount', -1),
+                    'minDays': bookingRule.get('minDays', -1),
+                    'maxDays': bookingRule.get('maxDays', -1),
+
+                    'minAdvHours': bookingRule.get('minAdvHours', -1),
+                    'maxAdvHours': bookingRule.get('maxAdvHours', -1),
+                    'weekSet': bookingRule.get('weekSet', ''),
+                    'startTime': bookingRule.get('startTime', ''),
+                    'endTime': bookingRule.get('endTime', ''),
+                    'bookingNotices': bookingRule.get('bookingNotices', ''),
+                }
+                res = Hotel_BookingRule_info.objects.get_or_create(bookingRuleId=bookingRuleId, channel=self.channel, hotel=self)
+
+                if res[1] is False:
+                    print('数据覆盖 原{}, 改{}'.format(res[0], data))
+                BookingRule = res[0]
+                for k in data:
+                    setattr(BookingRule, k, data[k])
+                BookingRule.save()
+        except Exception as exc:
+            print(exc)
+            return False
+        return True
+
+    def refresh_rate_refundRules(self, refundRules):
+        try:
+            for r in refundRules:
+
+                refundRuleId = r.get('refundRuleId', '')
+
+
+                data = {
+                    'refundRuleType': r.get('refundRuleType', 1),
+                    'refundRuleHours': r.get('refundRuleHours', 30),
+                    'deductType': r.get('deductType', 1),
+                }
+                res = Hotel_RefundRule_info.objects.get_or_create(refundRuleId=refundRuleId, channel=self.channel, hotel=self)
+
+                if res[1] is False:
+                    print('数据覆盖 原{}, 改{}'.format(res[0], data))
+                refundRule = res[0]
+                for k in data:
+                    setattr( refundRule, k, data[k])
+                refundRule.save()
+        except Exception as exc:
+            print(exc)
+            return False
+        return True
+
+    def refresh_puls_static_info(self):
+        res = False
+
+        api = script.SZ_JL_API()
+        data = api.JL_queryHotelDetail(self.hotelId)
+
+        if len(data) == 0:
+            return False
+
+        hotelInfo = data.get('hotelInfo', {})
+        roomTypeList = data.get('roomTypeList', [])
+        rateTypeList = data.get('rateTypeList', [])
+        imageList = data.get('imageList', [])
+
+        res = self.set_puls_info(hotelInfo) | res
         res = self.creater_rooms(roomTypeList) | res
         res = self.creater_rateTypeList(rateTypeList) | res
         res = self.creater_imageList(imageList) | res
@@ -258,77 +373,45 @@ class Hotel_info(models.Model):
             setattr(RefundRule, k, data.get(k))
         RefundRule.save()
 
-    def update_nightlyRates(self, nightlyRates, Rateplan):
-        hotelId = self.hotelId
-        channel = self.channel
 
-        for n in nightlyRates:
 
-            data = {
-                'channel': n.get('channel', ''),
-                'formulaTypen': str(n.get('formulaType', '')),
-                'date': n.get('date', ''),
-                'cose': n.get('cose', 0.0),
-                'status': n.get('status', 0),
-                'currentAlloment': n.get('currentAlloment', 0),
-
-                # 'breakfast': n.get('breakfast', ''),
-                # 'bookingRuleId': n.get('bookingRuleId', ''),
-                # 'refundRuleId': n.get('refundRuleId', ''),
-                'hotel': self,
-                'Rateplan': Rateplan,
-            }
-
-            res = Hotel_NightlyRate_info.objects.get_or_create(channel=channel, hotel=self, Rateplan=Rateplan,
-                                                               date=n.get('date', ''))
-
-            if res[1] is False:
-                print('数据覆盖 原{}, 改{}'.format(res[0], data))
-            nightlyrate = res[0]
-
-            for k in data:
-                setattr(nightlyrate, k, data.get(k))
-            nightlyrate.save()
-
-        pass
-
-    def update_rateplan(self, rooms):
-        hotelId = self.hotelId
-        channel = self.channel
-
-        for room in rooms:
-            ratePlan = room.get('ratePlans', [{}, ])[0]
-            keyId = room.get('keyId', '')
-            rate_data = {
-
-                'channel': channel,
-                'keyId': ratePlan.get('keyId', ''),
-                'supplierId': ratePlan.get('supplierId', 0),
-                'keyName': ratePlan.get('keyName', ''),
-                'bedName': ratePlan.get('bedName', ''),
-                'maxOccupancy': ratePlan.get('maxOccupancy', -1),
-                'currency': ratePlan.get('currency', '无'),
-                'rateTypeId': ratePlan.get('rateTypeId', '0'),
-                'paymentType': ratePlan.get('paymentType', 0),
-                'breakfast': ratePlan.get('breakfast', 0),
-                'ifInvoice': ratePlan.get('paymentType', 0),
-                'bookingRuleId': ratePlan.get('bookingRuleId', ''),
-                'refundRuleId': ratePlan.get('refundRuleId', ''),
-                'market': ratePlan.get('market', ''),
-            }
-
-            res = models.RatePlan_info.objects.get_or_create(channel=channel, keyId=keyId)
-
-            if res[1] is False:
-                print('数据覆盖 原{}, 改{}'.format(res[0], rate_data))
-            rate = res[0]
-
-            for k in rate_data:
-                setattr(rate, k, rate_data.get(k))
-            rate.save()
-
-            nightlyRates = ratePlan.get('nightlyRates', [])
-            self.update_nightlyRates(nightlyRates)
+    # def update_rateplan(self, rooms):
+    #     hotelId = self.hotelId
+    #     channel = self.channel
+    #
+    #     for room in rooms:
+    #         ratePlan = room.get('ratePlans', [{}, ])[0]
+    #         keyId = room.get('keyId', '')
+    #         rate_data = {
+    #
+    #             'channel': channel,
+    #             'keyId': ratePlan.get('keyId', ''),
+    #             'supplierId': ratePlan.get('supplierId', 0),
+    #             'keyName': ratePlan.get('keyName', ''),
+    #             'bedName': ratePlan.get('bedName', ''),
+    #             'maxOccupancy': ratePlan.get('maxOccupancy', -1),
+    #             'currency': ratePlan.get('currency', '无'),
+    #             'rateTypeId': ratePlan.get('rateTypeId', '0'),
+    #             'paymentType': ratePlan.get('paymentType', 0),
+    #             'breakfast': ratePlan.get('breakfast', 0),
+    #             'ifInvoice': ratePlan.get('paymentType', 0),
+    #             'bookingRuleId': ratePlan.get('bookingRuleId', ''),
+    #             'refundRuleId': ratePlan.get('refundRuleId', ''),
+    #             'market': ratePlan.get('market', ''),
+    #         }
+    #
+    #         res = models.RatePlan_info.objects.get_or_create(channel=channel, keyId=keyId)
+    #
+    #         if res[1] is False:
+    #             print('数据覆盖 原{}, 改{}'.format(res[0], rate_data))
+    #         rate = res[0]
+    #
+    #         for k in rate_data:
+    #             setattr(rate, k, rate_data.get(k))
+    #         rate.save()
+    #
+    #         nightlyRates = ratePlan.get('nightlyRates', [])
+    #         self.update_nightlyRates(nightlyRates)
 
 
 class Room_type_info(models.Model):
@@ -362,6 +445,45 @@ class Room_type_info(models.Model):
         verbose_name = '房间信息表'
         verbose_name_plural = verbose_name
         db_table = 'Room_type_info'
+
+    def update_ratePlans(self, ratePlans):
+        try:
+            for rate in ratePlans:
+                keyId = rate.get('keyId', '')
+
+                data = {
+                    'supplierId': rate.get('supplierId', 0),
+                    'keyName': rate.get('keyName', ''),
+                    'bedName': rate.get('bedName', ''),
+                    'maxOccupancy': rate.get('maxOccupancy', 0),
+                    'currency': rate.get('currency', ''),
+                    'rateTypeId': rate.get('rateTypeId', ''),
+                    'paymentType': rate.get('paymentType', -1),
+                    'breakfast': rate.get('breakfast', 0),
+                    'ifInvoice': 0,
+                    'bookingRuleId': rate.get('bookingRuleId', ''),
+                    'refundRuleId': rate.get('refundRuleId', ''),
+                    'market': rate.get('market', ''),
+                }
+                res = RatePlan_info.objects.get_or_create(channel=self.channel, keyId=keyId)
+
+                if res[1] is False:
+                    print('数据覆盖 原{}, 改{}'.format(res[0], data))
+                RatePlan = res[0]
+                for k in data:
+                    setattr(RatePlan, k, data[k])
+
+                RatePlan.save()
+
+                # 放置价格
+                nightlyRates = RatePlan.get('nightlyRates', {})
+                RatePlan.update_nightlyRates(nightlyRates)
+
+        except Exception as exc:
+            print(exc)
+            return False
+        return True
+
 
 
 class Rate_type_info(models.Model):
@@ -490,6 +612,38 @@ class RatePlan_info(models.Model):
         verbose_name_plural = verbose_name
         db_table = 'rateplan_info'
 
+    def update_nightlyRates(self, nightlyRates):
+
+        channel = self.channel
+        try:
+            for n in nightlyRates:
+                jl_data = n.get('date', '')
+                data = {
+                    'formulaTypen': str(n.get('formulaType', '')),
+                    'cose': n.get('cose', 0.0),
+                    'status': n.get('status', 0),
+                    'currentAlloment': n.get('currentAlloment', 0),
+
+                    # 'breakfast': n.get('breakfast', ''),
+                    # 'bookingRuleId': n.get('bookingRuleId', ''),
+                    # 'refundRuleId': n.get('refundRuleId', ''),
+                    'hotel': self,
+
+                }
+
+                res = Hotel_NightlyRate_info.objects.get_or_create(data=jl_data, channel=channel, Rateplan=self, hotel=self.hotel)
+                if res[1] is False:
+                    print('数据覆盖 原{}, 改{}'.format(res[0], data))
+                nightlyrate = res[0]
+                for k in data:
+                    setattr(nightlyrate, k, data.get(k))
+                nightlyrate.save()
+        except Exception as exc:
+            print(exc)
+            return False
+        return True
+
+
 
 class Hotel_NightlyRate_info(models.Model):
     id = models.BigAutoField('编号', primary_key=True)
@@ -523,7 +677,7 @@ class Hotel_BookingRule_info(models.Model):
     id = models.BigAutoField('编号', primary_key=True)
     channel = models.CharField('渠道', max_length=50, default='未知')
 
-    bookingRuleId = models.CharField('预订条款编号', max_length=100)  # String	无
+    bookingRuleId = models.CharField('预订条款编号', max_length=500)  # String	无
     startDate = models.CharField('开始日期', max_length=100)  # String	无	报价生效时间yyyy-MM-dd HH:mm:ss 为空表示无限制
     endDate = models.CharField('结束日期', max_length=100)  # String	无	报价结束时间yyyy-MM-dd HH:mm:ss 为空表示无限制
     minAmount = models.IntegerField('预订最少数量', default=1)  # Integer	1	最少预定房间数量

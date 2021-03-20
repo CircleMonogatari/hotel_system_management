@@ -244,10 +244,46 @@ class Hotel_info(models.Model):
         if len(data) == 0:
             return False
         try:
-            quset = Hotel_info.objects.filter(pk=self.pk)
-            data['channel'] = '深圳捷旅'
-            data['hotelId'] = str(data.pop('hotelId'))
-            quset.update(**data)
+
+            body = {
+                'star': data.get('star', ''),
+                'hotelNameCn': data.get('hotelNameCn', ''),
+                'hotelNameEn': data.get('hotelNameEn', ''),
+                'addressCn': data.get('addressCn', ''),
+                'addressEn': data.get('addressEn', ''),
+                'phone': data.get('phone', ''),
+                'longitude': data.get('longitude', ''),
+                'latitude': data.get('latitude', ''),
+                'instantConfirmation': data.get('instantConfirmation', 0),
+                'sellType': data.get('sellType', ''),
+                'updateTime': data.get('updateTime', ''),
+                'is_effective': data.get('is_effective', ''),
+                'detail': data.get('detail', ''),
+
+                'themeType': data.get('themeType', ''),
+                'area': data.get('area', ''),
+                'businessCircle': data.get('businessCircle', -1),
+                'fax': data.get('fax', ''),
+                'email': data.get('email', ''),
+                'postCode': data.get('postCode', ''),
+                'checkPolicy': data.get('checkPolicy', ''),
+                'childrenPolicy': data.get('childrenPolicy', ''),
+                'petPolicy': data.get('petPolicy', ''),
+                'establishmentDate': data.get('establishmentDate', ''),
+                'renovationDate': data.get('renovationDate', ''),
+                'hotelGroup': data.get('hotelGroup', ''),
+                'hotelBrand': data.get('hotelBrand', ''),
+                'facilities': data.get('facilities', ''),
+                'cardType': data.get('cardType', ''),
+                'minPrice': data.get('minPrice', 0.0),
+                'introduceCn': data.get('introduceCn', ''),
+                'introduceEn': data.get('introduceEn', ''),
+            }
+
+            for k in body:
+                setattr(self, k, body[k])
+
+            self.save()
         except Exception as exc:
             print(exc)
             return False
@@ -476,7 +512,7 @@ class Room_type_info(models.Model):
                 RatePlan.save()
 
                 # 放置价格
-                nightlyRates = RatePlan.get('nightlyRates', {})
+                nightlyRates = rate.get('nightlyRates', {})
                 RatePlan.update_nightlyRates(nightlyRates)
 
         except Exception as exc:
@@ -627,11 +663,9 @@ class RatePlan_info(models.Model):
                     # 'breakfast': n.get('breakfast', ''),
                     # 'bookingRuleId': n.get('bookingRuleId', ''),
                     # 'refundRuleId': n.get('refundRuleId', ''),
-                    'hotel': self,
-
                 }
 
-                res = Hotel_NightlyRate_info.objects.get_or_create(data=jl_data, channel=channel, Rateplan=self, hotel=self.hotel)
+                res = Hotel_NightlyRate_info.objects.get_or_create(date=jl_data, channel=channel, Rateplan=self, hotel=self.hotel)
                 if res[1] is False:
                     print('数据覆盖 原{}, 改{}'.format(res[0], data))
                 nightlyrate = res[0]
@@ -668,7 +702,7 @@ class Hotel_NightlyRate_info(models.Model):
 
     class Meta:
         managed = manageFlag
-        verbose_name = '夜间数据'
+        verbose_name = '间夜价格数据'
         verbose_name_plural = verbose_name
         db_table = 'hotel_nightlyrate_info'
 

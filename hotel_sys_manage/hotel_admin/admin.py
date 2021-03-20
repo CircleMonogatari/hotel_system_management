@@ -139,15 +139,10 @@ class Hotel_info_admin(admin.ModelAdmin):
             True: 0,
             False: 0,
         }
-        for hotel in queryset:
-            message_map = {
-                True: 0,
-                False: 0,
-            }
 
-            for hotel in queryset:
-                res = hotel.refresh_rateplan_info()
-                message_map[res] = message_map[res] + 1
+        for hotel in queryset:
+            res = hotel.refresh_rateplan_info()
+            message_map[res] = message_map[res] + 1
 
         messages.add_message(request, messages.SUCCESS, '成功写入{}条数据'.format(message_map[True]))
         messages.add_message(request, messages.ERROR, '失败{}条'.format(message_map[False]))
@@ -229,6 +224,93 @@ class room_image_info_admin(admin.ModelAdmin):
     )
 
     # list_filter = ('basisroomCn',)
+
+
+@admin.register(models.RatePlan_info)
+class RatePlan_info_admin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'channel',
+        'keyId',
+        'supplierId',
+        'keyName',
+        'bedName',
+        'maxOccupancy',
+        'currency',
+        'rateTypeId',
+        'paymentType',
+        'breakfast',
+        'ifInvoice',
+        'bookingRuleId',
+        'refundRuleId',
+        'market',
+        'hotel',
+    )
+
+
+@admin.register(models.Hotel_NightlyRate_info)
+class Hotel_NightlyRate_info_admin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'channel',
+        'formulaTypen',
+        'date',
+        'cose',
+        'status',
+        'currentAlloment',
+        'breakfast',
+        'bookingRuleId',
+        'refundRuleId',
+        'hotel',
+        'Rateplan',
+    )
+
+
+@admin.register(models.Hotel_BookingRule_info)
+class Hotel_BookingRule_info_admin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'channel',
+        'bookingRuleId',
+        'startDate',
+        'endDate',
+        'minAmount',
+        'maxAmount',
+        'minDays',
+        'maxDays',
+        'minAdvHours',
+        'maxAdvHours',
+        'weekSet',
+        'startTime',
+        'endTime',
+        'bookingNotices',
+        'hotel',
+    )
+
+
+@admin.register(models.Hotel_RefundRule_info)
+class Hotel_RefundRule_info_admin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'channel',
+        'hotel',
+        'refundRuleId',
+        'refundRuleType',
+        'refundRuleHours',
+        'deductType',
+    )
+
+
+@admin.register(models.Hotel_Promotion_info)
+class Hotel_Promotion_info_admin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'channel',
+        'startDate',
+        'endDate',
+        'description',
+        'RatePlan',
+    )
 
 
 @admin.register(models.Order_info)

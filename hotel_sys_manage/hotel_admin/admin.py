@@ -157,14 +157,6 @@ class Hotel_info_admin(admin.ModelAdmin):
     refresh_hotel_rateplan_info.style = 'color:blue;'
 
 
-@admin.register(models.Price_model_info)
-class Proce_model_info_admin(admin.ModelAdmin):
-    list_display = (
-        'price_model_id',
-        'name',
-        'proportion',
-        'level',
-    )
 
 
 @admin.register(models.Room_type_info)
@@ -233,6 +225,7 @@ class RatePlan_info_admin(admin.ModelAdmin):
         'channel',
         'keyId',
         'supplierId',
+        'creater_order',
         'keyName',
         'bedName',
         'maxOccupancy',
@@ -261,6 +254,11 @@ class Hotel_NightlyRate_info_admin(admin.ModelAdmin):
         'breakfast',
         'bookingRuleId',
         'refundRuleId',
+        'hotel',
+        'Rateplan',
+    )
+
+    list_filter = (
         'hotel',
         'Rateplan',
     )
@@ -313,18 +311,4 @@ class Hotel_Promotion_info_admin(admin.ModelAdmin):
     )
 
 
-@admin.register(models.Order_info)
-class Order_info_admin(admin.ModelAdmin):
-    list_display = (
-        'order_id',
-        'room_type',
-        'hotel',
-        'channel',
-        'price',
-        'custom_proce',
-        'sys_create_time',
-        'sys_update_time',
-        'sys_create_user',
-    )
 
-    list_filter = ('room_type', 'room_type', 'channel')

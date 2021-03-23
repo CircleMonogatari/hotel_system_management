@@ -21,5 +21,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
 
     path('api/', include('hotel_swagger.urls')),
+    path('order/', include('hotel_order.urls')),
 
 ]

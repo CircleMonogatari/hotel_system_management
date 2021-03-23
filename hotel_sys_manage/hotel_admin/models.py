@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from django.db import models
 
 # Create your models here.
+from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
@@ -140,7 +141,6 @@ class Hotel_info(models.Model):
         res = self.refresh_rate_bookingRules(bookingRules) | res
         res = self.refresh_rate_refundRules(refundRules) | res
 
-
         return res
         pass
 
@@ -168,7 +168,6 @@ class Hotel_info(models.Model):
 
                 data = {
 
-
                     'minAmount': bookingRule.get('minAmount', -1),
                     'maxAmount': bookingRule.get('maxAmount', -1),
                     'minDays': bookingRule.get('minDays', -1),
@@ -181,7 +180,8 @@ class Hotel_info(models.Model):
                     'endTime': bookingRule.get('endTime', ''),
                     'bookingNotices': bookingRule.get('bookingNotices', ''),
                 }
-                res = Hotel_BookingRule_info.objects.get_or_create(bookingRuleId=bookingRuleId, channel=self.channel, hotel=self)
+                res = Hotel_BookingRule_info.objects.get_or_create(bookingRuleId=bookingRuleId, channel=self.channel,
+                                                                   hotel=self)
 
                 if res[1] is False:
                     print('数据覆盖 原{}, 改{}'.format(res[0], data))
@@ -200,19 +200,19 @@ class Hotel_info(models.Model):
 
                 refundRuleId = r.get('refundRuleId', '')
 
-
                 data = {
                     'refundRuleType': r.get('refundRuleType', 1),
                     'refundRuleHours': r.get('refundRuleHours', 30),
                     'deductType': r.get('deductType', 1),
                 }
-                res = Hotel_RefundRule_info.objects.get_or_create(refundRuleId=refundRuleId, channel=self.channel, hotel=self)
+                res = Hotel_RefundRule_info.objects.get_or_create(refundRuleId=refundRuleId, channel=self.channel,
+                                                                  hotel=self)
 
                 if res[1] is False:
                     print('数据覆盖 原{}, 改{}'.format(res[0], data))
                 refundRule = res[0]
                 for k in data:
-                    setattr( refundRule, k, data[k])
+                    setattr(refundRule, k, data[k])
                 refundRule.save()
         except Exception as exc:
             print(exc)
@@ -409,8 +409,6 @@ class Hotel_info(models.Model):
             setattr(RefundRule, k, data.get(k))
         RefundRule.save()
 
-
-
     # def update_rateplan(self, rooms):
     #     hotelId = self.hotelId
     #     channel = self.channel
@@ -501,7 +499,7 @@ class Room_type_info(models.Model):
                     'refundRuleId': rate.get('refundRuleId', ''),
                     'market': rate.get('market', ''),
                 }
-                res = RatePlan_info.objects.get_or_create(channel=self.channel, keyId=keyId)
+                res = RatePlan_info.objects.get_or_create(channel=self.channel, keyId=keyId, hotel=self.hotel)
 
                 if res[1] is False:
                     print('数据覆盖 原{}, 改{}'.format(res[0], data))
@@ -519,7 +517,6 @@ class Room_type_info(models.Model):
             print(exc)
             return False
         return True
-
 
 
 class Rate_type_info(models.Model):
@@ -648,6 +645,32 @@ class RatePlan_info(models.Model):
         verbose_name_plural = verbose_name
         db_table = 'rateplan_info'
 
+    def __str__(self):
+        return self.keyName
+
+    def creater_order_path(self):
+
+        return reverse('order_created') + "?channel={}&hotelid={}&keyId={}".format(self.channel,
+                                                                                   str(self.hotel.hotelId), self.keyId)
+
+    def get_date_cose(self, date_list):
+        nightlyRates_info = self.nightlyRates.all().values('date', 'cose', 'currentAlloment')
+
+        data = {}
+        for d in date_list:
+            nis = nightlyRates_info.filter(date=d)
+            if nis.exists():
+                data[d] = (nis[0].get('cose'))
+
+        return data
+
+
+
+    @property
+    def creater_order(self):
+
+        return format_html('<a href="{}"> 立即下单 </a>', self.creater_order_path())
+
     def update_nightlyRates(self, nightlyRates):
 
         channel = self.channel
@@ -665,7 +688,8 @@ class RatePlan_info(models.Model):
                     # 'refundRuleId': n.get('refundRuleId', ''),
                 }
 
-                res = Hotel_NightlyRate_info.objects.get_or_create(date=jl_data, channel=channel, Rateplan=self, hotel=self.hotel)
+                res = Hotel_NightlyRate_info.objects.get_or_create(date=jl_data, channel=channel, Rateplan=self,
+                                                                   hotel=self.hotel)
                 if res[1] is False:
                     print('数据覆盖 原{}, 改{}'.format(res[0], data))
                 nightlyrate = res[0]
@@ -678,14 +702,13 @@ class RatePlan_info(models.Model):
         return True
 
 
-
 class Hotel_NightlyRate_info(models.Model):
     id = models.BigAutoField('编号', primary_key=True)
     channel = models.CharField('渠道', max_length=50, default='未知')
 
     formulaTypen = models.CharField('配额类型', max_length=50, default='')  # String	如：配额房、包房等,字段对应的code含义只对深捷旅有意义
     date = models.CharField('日期', default='', max_length=20)  # String	无	yyyy-MM-dd
-    cose = models.DecimalField('价格', decimal_places=4, max_digits=10, default=0.0)  # Double	无
+    cose = models.DecimalField('价格', decimal_places=2, max_digits=10, default=0.0)  # Double	无
     status = models.IntegerField('房态', default=0)  # Integer	无	1:保留房、2:待查、3:满房、4:限时确认
     currentAlloment = models.IntegerField('库存', default=0)  # Integer	无	库存数量
     breakfast = models.IntegerField('早餐', default=0)  # Integer	无	此处日历早餐,需要优先获取、无节点则拿上一级节点早餐
@@ -782,52 +805,3 @@ class Hotel_Promotion_info(models.Model):
         verbose_name = '礼包信息'
         verbose_name_plural = verbose_name
         db_table = 'hotel_promotion_info'
-
-
-class My____________________(object):
-    pass
-
-
-class Price_model_info(models.Model):
-    LEVEL_CHOICES = {
-        (0, '默认'),
-        (1, '节假日'),
-        (2, '自定义'),
-        (9, '最高级'),
-    }
-
-    price_model_id = models.BigAutoField(primary_key=True)
-    name = models.CharField('名称', max_length=100, default='无')
-    proportion = models.DecimalField('加价比列', max_digits=5, decimal_places=2, default=1.0)
-    level = models.IntegerField('优先级', default=0, choices=LEVEL_CHOICES)
-
-    sys_create_time = models.DateTimeField('创建时间', auto_now_add=True)
-    sys_update_time = models.DateTimeField('更新时间', auto_now=True)
-    sys_create_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name='创建人')
-
-    class Meta:
-        managed = manageFlag
-        verbose_name = '加价类型表'
-        verbose_name_plural = verbose_name
-        db_table = 'price_model_info'
-
-
-class Order_info(models.Model):
-    order_id = models.BigAutoField(primary_key=True)
-    room_type = models.CharField('房型', max_length=100, default='无')
-    hotel = models.ForeignKey(Hotel_info, on_delete=models.SET_NULL, null=True, verbose_name='酒店')
-    channel = models.CharField('渠道', max_length=100, )
-
-    price = models.DecimalField('报价', max_digits=5, decimal_places=2, default=0.0)
-    custom_proce = models.DecimalField('强制自定义售价', max_digits=5, decimal_places=2, default=0.0)
-    price_model = models.ManyToManyField(Price_model_info, verbose_name='加价类型')
-
-    sys_create_time = models.DateTimeField('创建时间', auto_now_add=True)
-    sys_update_time = models.DateTimeField('更新时间', auto_now=True)
-    sys_create_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name='创建人')
-
-    class Meta:
-        managed = manageFlag
-        verbose_name = '订单信息'
-        verbose_name_plural = verbose_name
-        db_table = 'order_info'

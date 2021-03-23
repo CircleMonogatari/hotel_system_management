@@ -6,6 +6,7 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import AllowAny
 
 from hotel_admin import models
+from hotel_order import models as models2
 
 from rest_framework.pagination import PageNumberPagination
 
@@ -79,13 +80,13 @@ class Hotel_Promotion_infoSerializer(serializers.ModelSerializer):
 
 class Price_model_infoSerializer(serializers.ModelSerializer):
     class Meta:
-        model = models.Price_model_info
+        model = models2.Price_model_info
         fields = '__all__'
 
 
 class Order_infoSerializer(serializers.ModelSerializer):
     class Meta:
-        model = models.Order_info
+        model = models2.Order_info
         fields = '__all__'
 
 #

@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'rest_framework_swagger',
 
     'hotel_admin',
+    'hotel_order',
     'hotel_task',
     'hotel_swagger',
 
@@ -63,7 +64,7 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
 
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    # 'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',

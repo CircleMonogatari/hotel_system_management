@@ -805,3 +805,22 @@ class Hotel_Promotion_info(models.Model):
         verbose_name = '礼包信息'
         verbose_name_plural = verbose_name
         db_table = 'hotel_promotion_info'
+
+
+
+class Hotel_Changed_Price(models.Model):
+    id = models.BigAutoField('编号', primary_key=True)
+    channel = models.CharField('渠道', max_length=50, default='未知')
+
+    changedPriceTime = models.DateTimeField('请求时间', auto_now_add=True)
+    changedPriceHotelList = models.CharField('变价酒店', max_length=2000,)
+
+    sys_create_time = models.DateTimeField('创建时间', auto_now_add=True)
+    sys_update_time = models.DateTimeField('更新时间', auto_now=True)
+    sys_create_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name='创建人')
+
+    class Meta:
+        managed = manageFlag
+        verbose_name = '变价时间表'
+        verbose_name_plural = verbose_name
+        db_table = 'hotel_changed_price'

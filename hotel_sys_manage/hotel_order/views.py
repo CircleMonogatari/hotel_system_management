@@ -191,3 +191,45 @@ class Order_create(View):
             print(e)
             res = []
         return res
+
+
+
+class Order_cancel(View):
+    page_html = 'hotel_order/submit_data.html'
+    api = script.SZ_JL_API()
+
+    CHANNEL_DICT = {
+        '深圳捷旅': 'JL',
+    }
+
+    def get(self, request):
+        data = {}
+
+
+        data_from = baseforms.Order_cannel_from(data)
+
+        return render(request, self.page_html, {'data_from': data_from, 'title': '取消订单'})
+
+    def post(self, request):
+        data_from = baseforms.Hotel_list_from(request.POST)
+        dic = {
+            'msg': '查无此订单',
+            'status': -1,
+        }
+
+        if data_from.is_valid():
+            orderid = data_from.changed_data.get('orderid', '')
+            cannel_Remark = data_from.changed_data.get('cannel_Remark', '')
+            orders = models.Order_info.objects.filter(order_id=orderid)
+            if orders.exists():
+                order = orders[0]
+                order.cancelOrder(cannel_Remark)
+
+                dic = {
+                    'msg': '取消中',
+                    'status': 0,
+                }
+                return HttpResponse(json.dumps(dic, ensure_ascii=False), content_type="application/json,charset=utf-8")
+            #
+            # orderid
+            # hotelid
